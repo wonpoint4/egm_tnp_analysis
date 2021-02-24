@@ -4,41 +4,53 @@ from libPython.tnpClassUtils import tnpSample
 ############################################################# 
 
 #### Choose one of these ####################
-#Period = {'2016BF', '2016GH', '2017', '2018' }
-#Measure = {'IDISO', 'Mu17', 'Mu8', 'IsoMu24' }
+#Period = {'2016BF', '2016GH', '2017', '2018', 'UL2016a', 'UL2016b', 'UL2017', 'UL2018' }
+#Measure = {'IDISO', 'Mu17', 'Mu8', 'IsoMu24', 'IsoMu27' }
 #Charge = {'+', '-', 'all' }
 
-Period = '2018' 
+Period = 'UL2018'
 Measure = 'IsoMu24'
 Charge = '+'
 
 #############################################################
-########## General Settings (default = '2017', 'Mu17', 'all')
+########## General Settings (default = 'UL2018', 'Mu17', 'all')
 #############################################################
 if Period == '2017' and Measure == 'IsoMu24' :
   Measure = 'IsoMu27'
+#elif Period == 'UL2017' and Measure == 'IsoMu24' :
+#  #Measure = 'IsoMu2427'
+if '2017' not in Period and Measure == 'IsoMu27' :
+  Measure = 'IsoMu24'
 
+baseOutDir = Period+'_'+Measure+'_'+Charge+'_MiNNLO/'
 baseOutDir = Period+'_'+Measure+'_'+Charge+'/'
 
 passcondition = 'DoubleIsoMu17Mu8_IsoMu17leg || DoubleIsoMu17TkMu8_IsoMu17leg'
-eventexp = 'tag_IsoMu27==1 && tag_pt > 29 && mass > 60 && mass < 130 && tag_charge*charge < 0 && tag_combRelIsoPF04dBeta < 0.15 && Medium && relTkIso < 0.10'
-eventexpMC = '(tag_IsoMu27==1 && tag_pt > 29 && mcTrue && mass > 60 && mass < 130 && tag_charge*charge < 0 && tag_combRelIsoPF04dBeta < 0.15 && Medium && relTkIso < 0.10) * weight'
+eventexp = 'tag_IsoMu24==1 && tag_pt > 26 && mass > 60 && mass < 130 && tag_charge*charge < 0 && tag_combRelIsoPF04dBeta < 0.15 && Medium && relTkIso < 0.10 && pair_deltaR > 0.3'
+#eventexpMC = '(tag_IsoMu27==1 && tag_pt > 29 && mcTrue && mass > 60 && mass < 130 && tag_charge*charge < 0 && tag_combRelIsoPF04dBeta < 0.15 && Medium && relTkIso < 0.10) * weight'
+eventexpMC = '(tag_IsoMu24==1 && tag_pt > 26 && mass > 60 && mass < 130 && tag_charge*charge < 0 && tag_combRelIsoPF04dBeta < 0.15 && Medium && relTkIso < 0.10 && pair_deltaR > 0.3) * weight'
 
-wonjuntnpdir = '/data9/Users/wonjun/public/CRABDIR/'
-filename = 'TnPTreeZ_17Nov2017_SingleMuon_Run2017BCDEFv1_GoldenJSON.root'
-filenameMC = 'TnPTreeZ_94X_DYJetsToLL_M50_Madgraph_WithWeights.root'
+wonjuntnpdir = '/data9/Users/wonjun/public/TnP_Trees/'
+filename = 'TnPTreeZ_12Nov2019_UL2018_SingleMuon_Run2018ABCDv2.root'
+filenameMC = 'TnPTreeZ_106XSummer19_UL18RECO_DYJetsToLL_M50_MadgraphMLM_WithWeights.root'
 
 #### Measure Option ########################################################
 if Measure == 'Mu8' :
   passcondition = 'DoubleIsoMu17Mu8_IsoMu8leg || DoubleIsoMu17TkMu8_IsoMu8leg'
 elif Measure == 'IsoMu27' :
   passcondition = 'IsoMu27'
+  eventexp = eventexp.replace('tag_IsoMu24==1 && tag_pt > 26', 'tag_IsoMu27==1 && tag_pt > 29')
+  eventexpMC = eventexpMC.replace('tag_IsoMu24==1 && tag_pt > 26', 'tag_IsoMu27==1 && tag_pt > 29')
+elif Measure == 'IsoMu2427' :
+  passcondition = 'IsoMu24 || IsoMu27'
+  eventexp = eventexp.replace('tag_IsoMu24==1 && tag_pt > 26', 'tag_IsoMu27==1 && tag_pt > 29')
+  eventexpMC = eventexpMC.replace('tag_IsoMu24==1 && tag_pt > 26', 'tag_IsoMu27==1 && tag_pt > 29')
 elif Measure == 'IsoMu24' :
-  if Period == '2018' :
-    passcondition = 'IsoMu24'
-  else :
+  if '2016' in Period :
     passcondition = 'IsoMu24 || IsoTkMu24'
-elif Measure == 'IDISO':
+  else :
+    passcondition = 'IsoMu24'
+elif Measure == 'IDISO' :
   passcondition = 'Medium && relTkIso < 0.10'
   eventexp = eventexp.replace('Medium && relTkIso < 0.10', 'TM')
   eventexpMC = eventexpMC.replace('Medium && relTkIso < 0.10', 'TM')
@@ -53,8 +65,6 @@ elif Charge == "-" :
 
 #### Period Option ########################################################
 if Period == "2016BF" :
-  eventexp = eventexp.replace('tag_IsoMu27==1 && tag_pt > 29','tag_IsoMu24==1 && tag_pt > 26')
-  eventexpMC = eventexpMC.replace('tag_IsoMu27==1 && tag_pt > 29','tag_IsoMu24==1 && tag_pt > 26')
   wonjuntnpdir = '/data9/Users/wonjun/public/TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016/'
   filename = 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_BCDEF.root'
   filenameMC = 'DY_Summer16PremixMoriond_weighted_BCDEF.root'
@@ -64,17 +74,42 @@ if Period == "2016BF" :
     eventexp = eventexp.replace('Medium','Medium2016')
     eventexpMC = eventexpMC.replace('Medium','Medium2016')
 elif Period == "2016GH" :
-  eventexp = eventexp.replace('tag_IsoMu27==1 && tag_pt > 29','tag_IsoMu24==1 && tag_pt > 26')
-  eventexpMC = eventexpMC.replace('tag_IsoMu27==1 && tag_pt > 29','tag_IsoMu24==1 && tag_pt > 26')
   wonjuntnpdir = '/data9/Users/wonjun/public/TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016/'
   filename = 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_GH.root'
   filenameMC = 'DY_Summer16PremixMoriond_weighted_GH.root'
+elif Period == "2017" :
+  eventexp = eventexp.replace('tag_IsoMu24==1 && tag_pt > 26', 'tag_IsoMu27==1 && tag_pt > 29')
+  eventexpMC = eventexpMC.replace('tag_IsoMu24==1 && tag_pt > 26', 'tag_IsoMu27==1 && tag_pt > 29')
+  wonjuntnpdir = '/data9/Users/wonjun/public/CRABDIR/'
+  filename = 'TnPTreeZ_17Nov2017_SingleMuon_Run2017BCDEFv1_GoldenJSON.root'
+  filenameMC = 'TnPTreeZ_94X_DYJetsToLL_M50_Madgraph_WithWeights.root'
 elif Period == "2018" :
-  eventexp = eventexp.replace('tag_IsoMu27==1 && tag_pt > 29','tag_IsoMu24==1 && tag_pt > 26')
-  eventexpMC = eventexpMC.replace('tag_IsoMu27==1 && tag_pt > 29','tag_IsoMu24==1 && tag_pt > 26')
   wonjuntnpdir = '/data9/Users/wonjun/public/TnPTreeZ_EarlyRereco_PromptReco_17Sep2018_SingleMuon_Run2018/'
   filename = 'TnPTreeZ_17Sep2018_SingleMuon_Run2018ABCD_GoldenJSON.root'
   filenameMC = 'TnPTreeZ_102XAutumn18_DYJetsToLL_M50_MadgraphMLM_weighted_ABCD.root'
+
+### Ultra Legacy ###
+elif Period == "UL2016a" :
+  filename = 'TnPTreeZ_21Feb2020_UL2016_SingleMuon_Run2016BCDEF_HIPMv1.root'
+  filenameMC = 'TnPTreeZ_106XSummer19_UL16RECOAPV_DYJetsToLL_M50_MadgraphMLM_WithWeights.root'
+  ##filenameMC = 'TnPTreeZ_106XSummer19_UL16RECOAPV_DYJetsToMuMu_M50_powhegMiNNLO_WithWeights.root'
+  if Measure == 'IDISO':
+    passcondition = passcondition.replace('Medium','Medium2016') #From Simranjit's presentation
+  else :
+    eventexp = eventexp.replace('Medium','Medium2016')
+    eventexpMC = eventexpMC.replace('Medium','Medium2016')
+elif Period == "UL2016b" :
+  filename = 'TnPTreeZ_21Feb2020_UL2016_SingleMuon_Run2016FGHv1.root'
+  filenameMC = 'TnPTreeZ_106XSummer19_UL16RECO_DYJetsToLL_M50_MadgraphMLM_WithWeights.root'
+  ##filenameMC = 'TnPTreeZ_106XSummer19_UL16RECO_DYJetsToMuMu_M50_powhegMiNNLO_WithWeights.root'
+elif Period == "UL2017" :
+  if Measure != 'IsoMu24' :
+    eventexp = eventexp.replace('tag_IsoMu24==1 && tag_pt > 26', 'tag_IsoMu27==1 && tag_pt > 29')
+    eventexpMC = eventexpMC.replace('tag_IsoMu24==1 && tag_pt > 26', 'tag_IsoMu27==1 && tag_pt > 29')
+  filename = 'TnPTreeZ_09Aug2019_UL2017_SingleMuon_Run2017BCDEFv1.root'
+  filenameMC = 'TnPTreeZ_106XSummer19_UL17RECO_DYJetsToLL_M50_MadgraphMLM_pdfwgt_F_WithWeights.root'
+
+eventexpGen = eventexpMC.replace('mass > 60', 'mcTrue && mass > 60')
 
 #############################################################
 ########## Binning Definition  [can be nD bining]
@@ -86,20 +121,21 @@ biningDef = [              ### For IDISO or Mu8
 if Measure == 'Mu17' :
   biningDef = [            ### For Mu17
     { 'var' : 'eta' , 'type': 'float', 'bins': [-2.4, -2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, -1.6, -1.5, -1.4, -1.3, -1.2, -1.1, -1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4] },
-    { 'var' : 'pt' , 'type': 'float', 'bins': [20, 25, 30, 35, 40, 45, 50, 60, 120] },            ## For turn-on curve, add [10,15,16,17,18,19,20,...]
+    #{ 'var' : 'pt' , 'type': 'float', 'bins': [20, 25, 30, 35, 40, 45, 50, 60, 120] },
+    { 'var' : 'pt' , 'type': 'float', 'bins': [14, 16, 18, 20, 25, 30, 35, 40, 45, 50, 60, 120] }, 
   ]
-elif Measure == 'IsoMu27' :
-  biningDef = [          ### For IsoMu27
+elif Measure == 'IsoMu27' and Period == "2017" :
+  biningDef = [          ### For IsoMu27 (Regacy 2017)
       { 'var' : 'eta' , 'type': 'float', 'bins': [-2.4, -2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, -1.6, -1.5, -1.4, -1.3, -1.2, -1.1, -1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4] },
-      { 'var' : 'pt' , 'type': 'float', 'bins': [29, 32, 35, 40, 45, 50, 60, 120] },         ## For turn-on curve, add [...,25,26,27,28,29,30,...]
+      { 'var' : 'pt' , 'type': 'float', 'bins': [29, 32, 35, 40, 45, 50, 60, 120] },
   ]
-elif Measure == 'IsoMu24' :
-  biningDef = [          ### For IsoMu24
+elif Measure == 'IsoMu24' or Measure == 'IsoMu2427' or Measure == 'IsoMu27':
+  biningDef = [          ### For IsoMu24 or (IsoMu24 || IsoMu27)
       { 'var' : 'eta' , 'type': 'float', 'bins': [-2.4, -2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, -1.6, -1.5, -1.4, -1.3, -1.2, -1.1, -1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4] },
-      { 'var' : 'pt' , 'type': 'float', 'bins': [26, 30, 35, 40, 45, 50, 60, 120] },       ## For turn-on curve, add [...,20,22,23,24,25,26,27,30,...]
+      #{ 'var' : 'pt' , 'type': 'float', 'bins': [26, 30, 35, 40, 45, 50, 60, 120] },
+      { 'var' : 'pt' , 'type': 'float', 'bins': [20, 22, 24, 26, 28, 30, 35, 40, 45, 50, 60, 120] },
   ]
 
-    #{ 'var' : 'eta' , 'type': 'float', 'bins': [-2.4, -2.1, -1.85, -1.6, -1.4, -1.2, -0.9, -0.6, -0.3, -0.2, 0.0, 0.2, 0.3, 0.6, 0.9, 1.2, 1.4, 1.6, 1.85, 2.1, 2.4] },
 #############################################################
 ########## fitting params to tune fit by hand if necessary
 #############################################################
@@ -163,32 +199,39 @@ tnpParAltSigFit2 = [
 #############################################################
 
 flags = {
-    'data'              : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,40,70,130),
-    #'data_altsig'       : tnpSample([wonjuntnpdir+filename],eventexp,tnpParAltSigFit,40,70,130), ### This should be done after mc_altsig
-    'data_mass60130'    : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,40,60,130),
-    'data_mass70120'    : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,40,70,120),
-    'data_massbin30'    : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,30,70,130),
-    'data_massbin50'    : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,50,70,130),
-    'data_tagiso010'    : tnpSample([wonjuntnpdir+filename],eventexp.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.1'),tnpParNomFit,40,70,130),
-    'data_tagiso020'    : tnpSample([wonjuntnpdir+filename],eventexp.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.2'),tnpParNomFit,40,70,130),
+    'data'              : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,40,70,130,81,101),
+    'data_altsig'       : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit2,40,70,130,81,101),
+    'data_massbroad'    : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,40,60,130,76,106),
+    'data_massnarrow'   : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,40,70,120,86,96),
+    'data_massbin30'    : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,30,70,130,81,101),
+    'data_massbin50'    : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit,50,70,130,81,101),
+    'data_tagiso010'    : tnpSample([wonjuntnpdir+filename],eventexp.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.1'),tnpParNomFit,40,70,130,81,101),
+    'data_tagiso020'    : tnpSample([wonjuntnpdir+filename],eventexp.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.2'),tnpParNomFit,40,70,130,81,101),
     #'data_altbkd'       : tnpSample([wonjuntnpdir+filename],eventexp,tnpParAltBkgFit,40,70,130),
-    'data_altsig2'       : tnpSample([wonjuntnpdir+filename],eventexp,tnpParNomFit2,40,70,130),
 
-    'mc'                : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltBkgFit,40,70,130),  ## For MC, used tnpParAltBkgFit instead of tnpParNomFit 
-    #'mc_altsig'         : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltSigFit2,40,70,130), ## because CMS for background can be exactly zero, but Exponential can't be....?
-    'mc_mass60130'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltBkgFit,40,60,130),
-    'mc_mass70120'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltBkgFit,40,70,120),
-    'mc_massbin30'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltBkgFit,30,70,130),
-    'mc_massbin50'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltBkgFit,50,70,130),
-    'mc_tagiso010'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.1'),tnpParAltBkgFit,40,70,130),
-    'mc_tagiso020'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.2'),tnpParAltBkgFit,40,70,130),
-    #'mc_altbkd'         : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltBkgFit,40,70,130),
-    'mc_altsig2'         : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltBkgFit,40,70,130),
+    'mc'                : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParNomFit,40,70,130,81,101),
+    'mc_altsig'         : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParNomFit2,40,70,130,81,101),
+    'mc_massbroad'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParNomFit,40,60,130,76,106),
+    'mc_massnarrow'     : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParNomFit,40,70,120,86,96),
+    'mc_massbin30'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParNomFit,30,70,130,81,101),
+    'mc_massbin50'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParNomFit,50,70,130,81,101),
+    'mc_tagiso010'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.1'),tnpParNomFit,40,70,130,81,101),
+    'mc_tagiso020'      : tnpSample([wonjuntnpdir+filenameMC],eventexpMC.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.2'),tnpParNomFit,40,70,130,81,101),
+    #'mc_altsig2'         : tnpSample([wonjuntnpdir+filenameMC],eventexpMC,tnpParAltBkgFit,40,70,130), 
+
+    'genmc'             : tnpSample([wonjuntnpdir+filenameMC],eventexpGen,tnpParNomFit,40,70,130),
+    'genmc_altsig'      : tnpSample([wonjuntnpdir+filenameMC],eventexpGen,tnpParNomFit2,40,70,130),
+    'genmc_massbroad'   : tnpSample([wonjuntnpdir+filenameMC],eventexpGen,tnpParNomFit,40,60,130,76,106),
+    'genmc_massnarrow'  : tnpSample([wonjuntnpdir+filenameMC],eventexpGen,tnpParNomFit,40,70,120,86,96),
+    'genmc_massbin30'   : tnpSample([wonjuntnpdir+filenameMC],eventexpGen,tnpParNomFit,30,70,130),
+    'genmc_massbin50'   : tnpSample([wonjuntnpdir+filenameMC],eventexpGen,tnpParNomFit,50,70,130),
+    'genmc_tagiso010'   : tnpSample([wonjuntnpdir+filenameMC],eventexpGen.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.1'),tnpParNomFit,40,70,130),
+    'genmc_tagiso020'   : tnpSample([wonjuntnpdir+filenameMC],eventexpGen.replace('tag_combRelIsoPF04dBeta < 0.15','tag_combRelIsoPF04dBeta < 0.2'),tnpParNomFit,40,70,130),
 }
 
 systematicDef = {
-    'data' : [['data_mass60130','data_mass70120'],['data_massbin30','data_massbin50'],['data_tagiso010','data_tagiso020'], ['data_altsig2']], #['data_altbkd']
-    'mc' :   [['mc_mass60130','mc_mass70120'],    ['mc_massbin30','mc_massbin50'],    ['mc_tagiso010','mc_tagiso020'],     ['mc_altsig2']]    # ['mc_altbkd']
+    'data' : [['data_massbroad','data_massnarrow'], ['data_massbin30','data_massbin50'],['data_tagiso010','data_tagiso020'], ['data_altsig']],
+    'mc' :   [['mc_massbroad','mc_massnarrow'],     ['mc_massbin30','mc_massbin50'],    ['mc_tagiso010','mc_tagiso020'],     ['mc_altsig']]
 }
 
 #############################################################

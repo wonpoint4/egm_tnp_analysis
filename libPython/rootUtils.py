@@ -54,6 +54,7 @@ def GetEffiHist(filename,bindef,option="total"):
     effihist=rt.TH2D('%s_eta_pt'%(filename.replace('.','/').split('/')[-2]),'%s_eta_pt'%(filename.replace('.','/').split('/')[-2]),len(etalist)-1,ar.array('d',etalist),len(ptlist)-1,ar.array('d',ptlist))
     f=open(filename,'r')
     for line in f.readlines():
+        if len(line) is 1 : continue
         words=line.split()
         if not words[0].isdigit(): continue
         ib=int(words[0])

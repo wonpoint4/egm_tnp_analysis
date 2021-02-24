@@ -25,14 +25,14 @@ using namespace std;
 
 class tnpFitter {
 public:
-  tnpFitter( TString filein, std::string histname,double xmin,double xmax);
+  tnpFitter( TString filein, std::string histname,double xmin,double xmax,double CnCmin=0.,double CnCmax=0.);
   ~tnpFitter(void) {if( _work != 0 ) delete _work;}
   void setZLineShapes(TH1 *hZPass, TH1 *hZFail );
   void setWorkspace(std::vector<std::string>);
   void setOutputFile(TFile *fOut ) {_fOut = fOut;}
-  TCanvas* fits(bool IsMCsample, std::string title = "",bool doCheck=false);
+  TCanvas* fits(bool doCnC, std::string title = "",bool doCheck=false);
   void useMinos(bool minos = true) {_useMinos = minos;}
-  void textParForCanvas(RooFitResult *resP, RooFitResult *resF, TPad *p, bool IsMCsample=false);
+  void textParForCanvas(RooFitResult *resP, RooFitResult *resF, TPad *p, bool doCnC);
   
   void fixSigmaFtoSigmaP(bool fix=true) { _fixSigmaFtoSigmaP= fix;}
 
@@ -42,13 +42,15 @@ private:
   std::string _histname_base;
   TFile *_fOut;
   double _nTotP, _nTotF, _eTotP, _eTotF;
+  double _nCnCP, _nCnCF, _eCnCP, _eCnCF;
   bool _useMinos;
   bool _fixSigmaFtoSigmaP;
-  double _xFitMin,_xFitMax;
+  double _xFitMin,_xFitMax,_xCnCMin,_xCnCMax;
+  bool _partialCnC = false;
   int nBins;
 };
 
-tnpFitter::tnpFitter(TString filein, std::string histname,double xmin, double xmax) : _useMinos(false),_fixSigmaFtoSigmaP(false) {
+tnpFitter::tnpFitter(TString filein, std::string histname,double xmin, double xmax,double CnCmin,double CnCmax) : _useMinos(false),_fixSigmaFtoSigmaP(false) {
   TFile f(filein);
   TH1 *hPass = (TH1*) f.Get(TString::Format("%s_Pass",histname.c_str()).Data());
   TH1 *hFail = (TH1*) f.Get(TString::Format("%s_Fail",histname.c_str()).Data());
@@ -64,6 +66,15 @@ tnpFitter::tnpFitter(TString filein, std::string histname,double xmin, double xm
   _nTotP = hPass->IntegralAndError(hPass->GetXaxis()->GetFirst(),hPass->GetXaxis()->GetLast(),_eTotP,"");
   _nTotF = hFail->IntegralAndError(hPass->GetXaxis()->GetFirst(),hPass->GetXaxis()->GetLast(),_eTotF,"");
   cout<<_nTotP<<"+-"<<_eTotP<<" "<<_nTotF<<"+-"<<_eTotF<<endl;
+
+  if(CnCmin < xmin || CnCmin > xmax) CnCmin = xmin;
+  if(CnCmax > xmax || CnCmax < xmin) CnCmax = xmax;
+  if(CnCmin != xmin || CnCmax != xmax) _partialCnC = true;
+  _xCnCMin = CnCmin;
+  _xCnCMax = CnCmax;
+  _nCnCP = hPass->IntegralAndError(hPass->GetXaxis()->FindBin(_xCnCMin),hPass->GetXaxis()->FindBin(_xCnCMax)-1,_eCnCP,"");
+  _nCnCF = hFail->IntegralAndError(hPass->GetXaxis()->FindBin(_xCnCMin),hPass->GetXaxis()->FindBin(_xCnCMax)-1,_eCnCF,"");
+  cout<<_nCnCP<<"+-"<<_eCnCP<<" "<<_nCnCF<<"+-"<<_eCnCF<<endl;
   /// MC histos are done between 50-130 to do the convolution properly
   /// but when doing MC fit in 60-120, need to zero bins outside the range
   for( int ib = 0; ib <= hPass->GetXaxis()->GetNbins()+1; ib++ )
@@ -110,12 +121,13 @@ void tnpFitter::setWorkspace(std::vector<std::string> workspace) {
   _work->Print("t");
 }
 
-TCanvas* tnpFitter::fits(bool IsMCsample, string title, bool doCheck) {
+TCanvas* tnpFitter::fits(bool doCnC, string title, bool doCheck) {
   cout << " title : " << title << endl;
 
   RooAbsPdf *pdfPass = _work->pdf("pdfPass");
   RooAbsPdf *pdfFail = _work->pdf("pdfFail");
 
+  /*
   if( IsMCsample ) {
     _work->var("nBkgP")->setVal(0); _work->var("nBkgP")->setConstant();
     _work->var("nBkgF")->setVal(0); _work->var("nBkgF")->setConstant();
@@ -134,6 +146,7 @@ TCanvas* tnpFitter::fits(bool IsMCsample, string title, bool doCheck) {
     if( _work->var("sigmaGaussP") )  _work->var("sigmaGaussP")->setRange(0, 0.1);
     if( _work->var("sigmaGaussF") )  _work->var("sigmaGaussF")->setRange(0, 0.1);
   }
+  */
 
   /// FC: seems to be better to change the actual range than using a fitRange in the fit itself (???)
   /// FC: I don't know why but the integral is done over the full range in the fit not on the reduced range
@@ -169,7 +182,7 @@ TCanvas* tnpFitter::fits(bool IsMCsample, string title, bool doCheck) {
   TCanvas c("c","c",1100,450);
   c.Divide(3,1);
   TPad *padText = (TPad*)c.GetPad(1);
-  textParForCanvas( resPass, resFail, padText, IsMCsample);
+  textParForCanvas( resPass, resFail, padText, doCnC);
   c.cd(2); pPass->Draw();
   double chiPassVal=pPass->chiSquare("pdfPass_Norm[mass]_Range[fit_nll_pdfPass_hPass]_NormRange[fit_nll_pdfPass_hPass]","h_hPass");
   TText chiPass(0.1,0.02,Form("chi^2/n=%f",chiPassVal)); chiPass.SetName("chiPass");chiPass.SetNDC();chiPass.Draw();
@@ -186,8 +199,9 @@ TCanvas* tnpFitter::fits(bool IsMCsample, string title, bool doCheck) {
 }
 
 /////// Stupid parameter dumper /////////
-void tnpFitter::textParForCanvas(RooFitResult *resP, RooFitResult *resF, TPad *p, bool IsMCsample) {
+void tnpFitter::textParForCanvas(RooFitResult *resP, RooFitResult *resF, TPad *p, bool doCnC) {
 
+  // Fitting efficiency (using GenConv)
   double eff = -1;
   double e_eff = 0;
 
@@ -202,25 +216,43 @@ void tnpFitter::textParForCanvas(RooFitResult *resP, RooFitResult *resF, TPad *p
   eff = nP / (nP+nF);
   e_eff = 1./(nTot*nTot) * sqrt( nP*nP* e_nF*e_nF + nF*nF * e_nP*e_nP );
 
-  TPaveText *text1 = new TPaveText(0.02,0.80, 0.98,0.98); //original (0,0.8, 1,1) -> (0.05,0.75, 0.95,0.95)
+  // Cut&Count efficiency
+  double Toteff = -1;
+  double Tote_eff = 0;
+
+  double _nTot = _nTotP+_nTotF;
+  Toteff = _nTotP / (_nTotP+_nTotF);
+  Tote_eff = 1./(_nTot*_nTot) * sqrt(_nTotP*_nTotP*_eTotF*_eTotF + _nTotF*_nTotF*_eTotP*_eTotP );
+
+  double CnCeff = -1;
+  double CnCe_eff = 0;
+
+  double _nCnC = _nCnCP+_nCnCF;
+  CnCeff = _nCnCP / (_nCnCP+_nCnCF);
+  CnCe_eff = 1./(_nCnC*_nCnC) * sqrt(_nCnCP*_nCnCP*_eCnCF*_eCnCF + _nCnCF*_nCnCF*_eCnCP*_eCnCP );
+
+  // Report TPave in fit canvases
+  TPaveText *text1 = new TPaveText(0.,0.82, 1.,1.); //original (0,0.8, 1,1) -> (0.05,0.75, 0.95,0.95) -> (0.02,0.80, 0.98,0.98)
   text1->SetFillColor(0);
   text1->SetBorderSize(0);
   text1->SetTextAlign(12);
 
   text1->AddText(TString::Format("* fit status pass: %d, fail : %d",resP->status(),resF->status()));
-  text1->AddText(TString::Format("* eff = %1.4f #pm %1.4f",eff,e_eff));
+  if(doCnC && _partialCnC) text1->AddText(TString::Format("* eff = %1.4f #pm %1.4f",CnCeff,CnCe_eff));
+  else if(doCnC) text1->AddText(TString::Format("* eff = %1.4f #pm %1.4f",Toteff,Tote_eff));
+  else text1->AddText(TString::Format("* eff = %1.4f #pm %1.4f",eff,e_eff));
   text1->SetName("reportTPave");
   //  text->SetTextSize(0.06);
 
-  TPaveText *text = new TPaveText(0.02,0.02, 0.98,0.78); //original (0,0, 1,0.8) -> (0.05,0.05, 0.95,0.7)
+  TPaveText *text = new TPaveText(0.,0., 1.,0.8); //original (0,0, 1,0.8) -> (0.05,0.05, 0.95,0.7) -> (0.02,0.02, 0.98,0.78)
   text->SetFillColor(0);
   text->SetBorderSize(0);
   text->SetTextAlign(12);
-  text->AddText("    ---Floating Parameters--- " );
+  text->AddText(" --- Fit Floating Parameters --- " );
   RooArgList listParFinalP = resP->floatParsFinal();
   for( int ip = 0; ip < listParFinalP.getSize(); ip++ ) {
     TString vName = listParFinalP[ip].GetName();
-    text->AddText(TString::Format("   - %s \t= %1.3f #pm %1.3f",
+    text->AddText(TString::Format("    - %s \t= %1.3f #pm %1.3f",
 				  vName.Data(),
 				  _work->var(vName)->getVal(),
 				  _work->var(vName)->getError() ) );
@@ -229,25 +261,22 @@ void tnpFitter::textParForCanvas(RooFitResult *resP, RooFitResult *resF, TPad *p
   RooArgList listParFinalF = resF->floatParsFinal();
   for( int ip = 0; ip < listParFinalF.getSize(); ip++ ) {
     TString vName = listParFinalF[ip].GetName();
-    text->AddText(TString::Format("   - %s \t= %1.3f #pm %1.3f",
+    text->AddText(TString::Format("    - %s \t= %1.3f #pm %1.3f",
 				  vName.Data(),
 				  _work->var(vName)->getVal(),
 				  _work->var(vName)->getError() ) );
   }
-
-  // CutandCount Efficiency for MC
-  text->AddText("    ---Cut & Count --- " );
-
-  double CnCeff = -1;
-  double CnCe_eff = 0;
-
-  double _nTot = _nTotP+_nTotF;
-  CnCeff = _nTotP / (_nTotP+_nTotF);
-  CnCe_eff = 1./(_nTot*_nTot) * sqrt(_nTotP*_nTotP*_eTotF*_eTotF + _nTotF*_nTotF*_eTotP*_eTotP );
-  text->AddText(TString::Format("   - nPass = %1.3f #pm %1.3f",_nTotP,_eTotP)); 
-  text->AddText(TString::Format("   - nFail = %1.3f #pm %1.3f",_nTotF,_eTotF)); 
-  text->AddText(TString::Format("   - Cut&Count eff = %1.4f #pm %1.4f",CnCeff,CnCe_eff)); // These can double-check that MC efficiency is exactly the same with Cut&Count efficiency
-
+  text->AddText(TString::Format("    - Fitting eff = %1.4f #pm %1.4f",eff,e_eff));
+  // Cut&Count Efficiency
+  text->AddText(" --- Cut & Count --- " );
+  text->AddText(TString::Format("    - nPass = %1.3f #pm %1.3f",_nTotP,_eTotP)); 
+  text->AddText(TString::Format("    - nFail = %1.3f #pm %1.3f",_nTotF,_eTotF)); 
+  text->AddText(TString::Format("    - Cut&Count eff = %1.4f #pm %1.4f",Toteff,Tote_eff));
+  if(doCnC && _partialCnC){
+    text->AddText(TString::Format("    - nPass [%.0f,%.0f GeV] = %1.3f #pm %1.3f",_xCnCMin,_xCnCMax,_nCnCP,_eCnCP));
+    text->AddText(TString::Format("    - nFail [%.0f,%.0f GeV] = %1.3f #pm %1.3f",_xCnCMin,_xCnCMax,_nCnCF,_eCnCF));
+    text->AddText(TString::Format("    - Cut&Count [%.0f,%.0f GeV] eff = %1.4f #pm %1.4f",_xCnCMin,_xCnCMax,CnCeff,CnCe_eff));
+  }
   p->cd();
   text1->Draw();
   text->Draw();

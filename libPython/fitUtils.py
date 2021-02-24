@@ -204,3 +204,50 @@ def histFitter_AltSig(histfile,fitfile,tnpBin,xmin,xmax,fitparameters,doDraw):
 
     rootfile.Close()
 
+def histFitter_GenConv(histfile,fitfile,tnpBin,xmin,xmax,fitparameters,doDraw,doCnC,CnCmin,CnCmax):
+    if doDraw: rt.gROOT.SetBatch(0)
+
+    tnpWorkspace = []
+    tnpWorkspace.extend(fitparameters)
+
+    fitter = tnpFitter( histfile, tnpBin['name'],xmin,xmax,CnCmin,CnCmax )
+
+    ## setup
+    fitter.useMinos()
+    rootfile = rt.TFile(fitfile,'update')
+    fitter.setOutputFile( rootfile )
+
+    ## generated Z LineShape
+    ## for high pT change the failing spectra to any probe to get statistics
+    Genhist = ''
+    if 'data' in histfile:
+        Genhist = histfile.replace('data', 'genmc')
+    else:
+        Genhist = histfile.replace('mc', 'genmc')
+    fileGen  = rt.TFile(Genhist,'read')
+    histZLineShapeP = fileGen.Get('%s_Pass'%tnpBin['name'])
+    histZLineShapeF = fileGen.Get('%s_Fail'%tnpBin['name'])
+
+    fitter.setZLineShapes(histZLineShapeP,histZLineShapeF)
+    fileGen.Close()
+
+    ### set workspace
+    workspace = rt.vector("string")()
+    for iw in tnpWorkspace:
+        workspace.push_back(iw)
+
+    fitter.setWorkspace( workspace )
+
+    title = tnpBin['title'].replace(';',' - ')
+    title = title.replace('probe_sc_eta','#eta_{SC}')
+    title = title.replace('probe_Ele_pt','p_{T}')
+    print title
+
+    fit=fitter.fits(doCnC, title,doDraw)
+
+    if doDraw:
+        fit.Draw()
+        time.sleep(10)
+        rt.gROOT.SetBatch(1)
+
+    rootfile.Close()

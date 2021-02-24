@@ -1,6 +1,6 @@
 #include "canvas_margin.h"
 
-void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charge = "total"){
+void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Charge = "total"){
 
   bool DoDrawSF_pT = true;
   bool DoDrawSF_eta = true;
@@ -8,16 +8,20 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
   bool DoSystematicStudy = true;
 
   if(eff == "IsoMu24" && DataPeriod == "2017") eff = "IsoMu27";
+  if(eff == "IsoMu24" && DataPeriod == "UL2017") eff = "IsoMu2427";
   vector<double> eta = { -2.4, -2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, -1.6, -1.5, -1.4, -1.3, -1.2, -1.1, -1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4 };
   vector<double> pt = {10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 120 };
-  if(eff == "Mu17") pt = { 20, 25, 30, 35, 40, 45, 50, 60, 120 };
+  if(eff == "Mu17") pt = { 14, 16, 18, 20, 25, 30, 35, 40, 45, 50, 60, 120 };
   else if(eff == "IsoMu27") pt = {29, 32, 35, 40, 45, 50, 60, 120 };
-  else if(eff == "IsoMu24") pt = {26, 30, 35, 40, 45, 50, 60, 120 };
+  else if(eff == "IsoMu24") pt = {20, 22, 24, 26, 28, 30, 35, 40, 45, 50, 60, 120 };
+  else if(eff == "IsoMu2427") pt = {20, 22, 24, 26, 28, 30, 35, 40, 45, 50, 60, 120 };
   vector<TString> charge = {"+", "-"};
   if(Charge == "+") charge = {"+"};
   else if(Charge == "-") charge = {"-"};
 
   TString workingDir = DataPeriod+"_"+eff;
+  TString DataPeriod2 = DataPeriod;
+  if(DataPeriod.Contains("UL")) DataPeriod2.Remove(0,2);
 
   for(unsigned int i_charge = 0; i_charge<charge.size(); i_charge++){
   
@@ -76,13 +80,13 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
       TLegend *lg = new TLegend(0.6, 0.1, 0.9, 0.3);
       lg->SetFillStyle(0);
       lg->SetBorderSize(0);
-      lg->AddEntry(eff_data_stat, "Run "+DataPeriod, "lp");
-      lg->AddEntry(eff_mc_stat, "MC", "lp");
+      lg->AddEntry(eff_data_stat, DataPeriod+" Data", "lp");
+      lg->AddEntry(eff_mc_stat, DataPeriod+" MC", "lp");
       lg->Draw();
 
       eff_data_stat->SetTitle("");
       eff_data_stat->GetYaxis()->SetTitle("Efficiency");
-      eff_data_stat->GetYaxis()->SetRangeUser(0.0, 1.1);
+      eff_data_stat->GetYaxis()->SetRangeUser(0.0, 1.2);
 
       c1_down->cd();
     
@@ -113,14 +117,14 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
       latex_selection.SetNDC();
 
       latex_CMSPriliminary.SetTextSize(0.045);
-      latex_CMSPriliminary.DrawLatex(0.09, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+      latex_CMSPriliminary.DrawLatex(0.1, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
       latex_Lumi.SetTextSize(0.03);
       //latex_Lumi.DrawLatex(0.73, 0.965, "45.39 fb^{-1} (13 TeV)");
-      latex_Lumi.DrawLatex(0.73, 0.965, "Run "+DataPeriod+" (13 TeV)");
+      latex_Lumi.DrawLatex(0.73, 0.965, "Run "+DataPeriod2+" (13 TeV)");
       latex_etacut.SetTextSize(0.03);
       latex_etacut.DrawLatex(0.73, 0.92, TString::Format("%0.2f",eta.at(i_eta))+" < eta < "+TString::Format("%.2f",eta.at(i_eta+1)));
-      latex_selection.SetTextSize(0.05); //original size 0.03 and position (0.125,0.92)
-      latex_selection.DrawLatex(0.14, 0.90, eff+" Efficiency");
+      latex_selection.SetTextSize(0.04); //original size 0.03 and position (0.125,0.92)
+      latex_selection.DrawLatex(0.14, 0.92, eff+" Efficiency");
       //latex_selection.DrawLatex(0.14, 0.90, "IDISO Efficiency");
 
       TString plotDir = workingDir+"_"+charge.at(i_charge)+"/Plots/Eff_vs_pT/";
@@ -182,8 +186,8 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
       TLegend *lg = new TLegend(0.6, 0.1, 0.9, 0.3);
       lg->SetFillStyle(0);
       lg->SetBorderSize(0);
-      lg->AddEntry(eff_data_stat, "Run "+DataPeriod, "lp");
-      lg->AddEntry(eff_mc_stat, "MC", "lp");
+      lg->AddEntry(eff_data_stat, DataPeriod+" Data", "lp");
+      lg->AddEntry(eff_mc_stat, DataPeriod+" MC", "lp");
       lg->Draw();
 
       eff_data_stat->SetTitle("");
@@ -206,7 +210,7 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
 
       hist_axis(eff_data_stat, ratio);
 
-      TLine line(-2.65, 1, 2.7, 1);
+      TLine line(-2.5, 1, 2.5, 1);
       line.SetLineWidth(1);
       line.SetLineColor(kRed);
       line.DrawClone("SAME");
@@ -219,14 +223,14 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
       latex_selection.SetNDC();
 
       latex_CMSPriliminary.SetTextSize(0.045);
-      latex_CMSPriliminary.DrawLatex(0.09, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+      latex_CMSPriliminary.DrawLatex(0.1, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
       latex_Lumi.SetTextSize(0.03);
       //latex_Lumi.DrawLatex(0.73, 0.965, "45.39 fb^{-1} (13 TeV)");
-      latex_Lumi.DrawLatex(0.73, 0.965, "Run "+DataPeriod+" (13 TeV)");
+      latex_Lumi.DrawLatex(0.73, 0.965, "Run "+DataPeriod2+" (13 TeV)");
       latex_ptcut.SetTextSize(0.03);
       latex_ptcut.DrawLatex(0.73, 0.92, TString::Format("%.0f",pt.at(i_pt))+" < p_{T} < "+TString::Format("%.0f",pt.at(i_pt+1))+" [GeV]");
-      latex_selection.SetTextSize(0.05); //original size 0.03 and position (0.125,0.92)
-      latex_selection.DrawLatex(0.14, 0.90, eff+" Efficiency");
+      latex_selection.SetTextSize(0.04); //original size 0.03 and position (0.125,0.92)
+      latex_selection.DrawLatex(0.14, 0.92, eff+" Efficiency");
       //latex_selection.DrawLatex(0.14, 0.90, "IDISO Efficiency");
       
       TString plotDir = workingDir+"_"+charge.at(i_charge)+"/Plots/Eff_vs_eta/";
@@ -309,7 +313,7 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
         lg->Draw();
 
         eff_stat_plus->SetTitle("");
-        eff_stat_plus->GetYaxis()->SetTitle("Efficiency");
+        eff_stat_plus->GetYaxis()->SetTitle("Data Efficiency");
         eff_stat_plus->GetYaxis()->SetRangeUser(0.5, 1.1);
 
         c1_down->cd();
@@ -328,7 +332,7 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
 
         hist_axis(eff_stat_plus, ratio);
 
-        TLine line(-2.4, 1, 2.4, 1);
+        TLine line(-2.5, 1, 2.5, 1);
         line.SetLineWidth(1);
         line.SetLineColor(kRed);
         line.DrawClone("SAME");
@@ -341,13 +345,13 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
         latex_selection.SetNDC();
 
         latex_CMSPriliminary.SetTextSize(0.045);
-        latex_CMSPriliminary.DrawLatex(0.09, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+        latex_CMSPriliminary.DrawLatex(0.1, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
         latex_Lumi.SetTextSize(0.03);
         latex_Lumi.DrawLatex(0.73, 0.965, "45.39 fb^{-1} (13 TeV)");
         latex_ptcut.SetTextSize(0.03);
         latex_ptcut.DrawLatex(0.73, 0.92, TString::Format("%.0f",pt.at(i_pt))+" < p_{T} < "+TString::Format("%.0f",pt.at(i_pt+1))+" [GeV]");
-        latex_selection.SetTextSize(0.03);
-        latex_selection.DrawLatex(0.125, 0.92, eff+" Efficiency");
+        latex_selection.SetTextSize(0.04);
+        latex_selection.DrawLatex(0.14, 0.92, eff+" Efficiency");
 
         TString name = plotDir+"pt"+TString::Format("%d",i_pt)+"_"+TString::Format("%.1f",pt.at(i_pt))+"to"+TString::Format("%.1f",pt.at(i_pt+1));
         c_eff->SaveAs(name+".png");
@@ -404,7 +408,7 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
         lg->Draw();
 
         eff_stat_plus->SetTitle("");
-        eff_stat_plus->GetYaxis()->SetTitle("Efficiency");
+        eff_stat_plus->GetYaxis()->SetTitle("Data Efficiency");
         eff_stat_plus->GetYaxis()->SetRangeUser(0.5, 1.1);
 
         c1_down->cd();
@@ -436,7 +440,7 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
         latex_selection.SetNDC();
 
         latex_CMSPriliminary.SetTextSize(0.045);
-        latex_CMSPriliminary.DrawLatex(0.09, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+        latex_CMSPriliminary.DrawLatex(0.1, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
         latex_Lumi.SetTextSize(0.03);
         latex_Lumi.DrawLatex(0.73, 0.965, "45.39 fb^{-1} (13 TeV)");
         latex_etacut.SetTextSize(0.03);
@@ -513,9 +517,9 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
   double GetMaximum(TH1D* hist);
   double GetMaximum(TGraphAsymmErrors *a);
 
-  vector< vector<TString> > vsysts = { {"Central"}, {"NMassBins_30", "NMassBins_50"}, {"MassRange_60to130", "MassRange_70to120"}, {"TagIso_0p10", "TagIso_0p20"},   { "SignalShape"  } };
-  vector< vector<Color_t> > vcolors = {{ kBlack  }, {    kRed    ,       kOrange   }, {      kYellow,              kGreen      }, {    kViolet,      kGray     },   {     kBlue      } };
-  vector< vector<TString> > vsystnames = {{  ""  }, { "_massbin30",   "_massbin50" }, {   "_mass60130",        "_mass70120"    }, { "_tagiso010",  "_tagiso020"},   {   "_altsig2"   } };
+  vector< vector<TString> > vsysts = { {"Central"}, {"NMassBins_30", "NMassBins_50"}, {"MassRange_Broad", "MassRange_Narrow"}, {"TagIso_0p10", "TagIso_0p20"},   { "SignalShape" } };
+  vector< vector<Color_t> > vcolors = {{ kBlack  }, {    kRed    ,       kOrange   }, {      kYellow,           kGreen      }, {    kViolet,      kGray     },   {     kBlue     } };
+  vector< vector<TString> > vsystnames = {{  ""  }, { "_massbin30",   "_massbin50" }, {   "_massbroad",      "_massnarrow"  }, { "_tagiso010",  "_tagiso020"},   {   "_altsig"   } };
 
   for(unsigned int i_charge = 0; i_charge<charge.size(); i_charge++){
     vector<double> someerror_Data = {};
@@ -869,7 +873,7 @@ void plotter(TString DataPeriod = "2017", TString eff = "IsoMu24", TString Charg
       latex_pt.DrawLatex(0.905, 0.9, "60 -120");
     }
     else{
-      if(DataPeriod == "2017"){
+      if(DataPeriod2 == "2017"){
 	latex_pt.DrawLatex(0.15, 0.9, "29 - 32");
 	latex_pt.DrawLatex(0.15+0.125, 0.9, "32 - 35");
       }

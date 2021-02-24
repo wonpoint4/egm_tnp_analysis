@@ -6,7 +6,7 @@ def mkdir(directory):
         os.makedirs(directory) 
 
 class tnpSample:
-    def __init__(self, paths, eventexp, fitfunction,mass_nbin,mass_min,mass_max):
+    def __init__(self, paths, eventexp, fitfunction,mass_nbin,mass_min,mass_max,CnC_min=0,CnC_max=0):
         self.paths=paths
         self.eventexp=eventexp
         self.fitfunction=fitfunction
@@ -15,7 +15,10 @@ class tnpSample:
         self.mass_nbin=mass_nbin
         self.mass_min=mass_min
         self.mass_max=mass_max
- 
+        if CnC_min>CnC_max : CnC_min, CnC_max = CnC_max, CnC_min
+        self.CnC_min=CnC_min
+        self.CnC_max=CnC_max
+
     def dump(self):
         print '  paths    : ', self.paths
         print '  eventexp  : ', self.eventexp
@@ -25,6 +28,8 @@ class tnpSample:
         print '  mass_nbin  : ', self.mass_nbin
         print '  mass_min: ',self.mass_min
         print '  mass_max: ',self.mass_max
+        print '  CnC_min: ',self.CnC_min
+        print '  CnC_max: ',self.CnC_max
 
 
 import ROOT as rt

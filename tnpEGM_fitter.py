@@ -27,6 +27,7 @@ parser.add_argument('--ijob'       , dest = 'ijob'   , type = int,  default=0)
 parser.add_argument('--fit', dest = 'fit'  , type = str, default='')
 parser.add_argument('--subjob'     , action='store_true' )
 parser.add_argument('--doDraw'     , action='store_true' )
+parser.add_argument('--doCnC'      , action='store_true' )
 
 args = parser.parse_args()
 
@@ -126,7 +127,7 @@ if args.createHists:
             print 'creating histogram for flag '+flag
             histfile='%s/%s/%s_hist.root'%(tnpConf.baseOutDir,flag,flag)
             var = { 'name' : 'mass', 'nbins' : sample.mass_nbin, 'min' : sample.mass_min, 'max': sample.mass_max }
-            if 'mc_altsig2' in flag:
+            if 'genmc' in flag:
                 var = { 'name' : 'mcMass', 'nbins' : sample.mass_nbin, 'min' : sample.mass_min, 'max': sample.mass_max }
             tnpBins = pickle.load( open( '%s/%s/bining.pkl'%(tnpConf.baseOutDir,flag),'rb') )
             tnpHist.makePassFailHistograms( sample.paths, 'tpTree/fitter_tree', histfile+ ('.condortmp'+str(args.ijob) if args.subjob else ''),tnpConf.passcondition, tnpBins, var,None,args.njob,args.ijob)
@@ -149,17 +150,20 @@ if  args.doFit:
         waiting_list=[]
         for flag,sample in tnpConf.flags.items() if args.flag is None else [(args.flag,tnpConf.flags[args.flag])]:
             ###### Sysetmatic (data_altsig) should be fitted after (mc_altsig) step is done
-            if 'data_altsig' in flag:
+            if 'genmc' in flag:
                 continue 
             fitfile='%s/%s/%s_fitresult.root'%(tnpConf.baseOutDir,flag,flag)
             rootfile=rt.TFile(fitfile,"update")
             rootfile.Close()
             print 'submit ',flag
-            waiting_list.append(subprocess.check_output('condor_submit ARGU="'+args.settings+' --doFit --flag '+flag+' '+iBinlist+' --subjob " etc/scripts/condor.jds -queue 1|tail -n 1|awk \'{print $NF}\'|sed "s/[^0-9]//g"',shell=True).strip())
+            if(args.doCnC):
+                waiting_list.append(subprocess.check_output('condor_submit ARGU="'+args.settings+' --doFit --flag '+flag+' '+iBinlist+' --doCnC --subjob " etc/scripts/condor.jds -queue 1|tail -n 1|awk \'{print $NF}\'|sed "s/[^0-9]//g"',shell=True).strip())
+            else:
+                waiting_list.append(subprocess.check_output('condor_submit ARGU="'+args.settings+' --doFit --flag '+flag+' '+iBinlist+' --subjob " etc/scripts/condor.jds -queue 1|tail -n 1|awk \'{print $NF}\'|sed "s/[^0-9]//g"',shell=True).strip())
         condor_wait(waiting_list)
-
+        '''
         for flag,sample in tnpConf.flags.items() if args.flag is None else [(args.flag,tnpConf.flags[args.flag])]:
-            if 'data_altsig'  not in flag:
+            if 'genmc'  not in flag:
                 continue
             waiting_list=[]
             print 'Other sysetmatics are done'
@@ -169,6 +173,7 @@ if  args.doFit:
             print 'Now submit ',flag
             waiting_list.append(subprocess.check_output('condor_submit ARGU="'+args.settings+' --doFit --flag '+flag+' '+iBinlist+' --subjob " etc/scripts/condor.jds -queue 1|tail -n 1|awk \'{print $NF}\'|sed "s/[^0-9]//g"',shell=True).strip())
             condor_wait(waiting_list)
+        '''
     else:
         for flag,sample in tnpConf.flags.items() if args.flag is None else [(args.flag,tnpConf.flags[args.flag])]:
             tnpBins = pickle.load( open( '%s/%s/bining.pkl'%(tnpConf.baseOutDir,flag),'rb') )
@@ -176,13 +181,12 @@ if  args.doFit:
                 histfile='%s/%s/%s_hist.root'%(tnpConf.baseOutDir,flag,flag)
                 fitfile='%s/%s/%s_fitresult.root'%(tnpConf.baseOutDir,flag,flag)
                 tnpBins = pickle.load( open( '%s/%s/bining.pkl'%(tnpConf.baseOutDir,flag),'rb') )
-                tnpRoot.histFitter_Norminal(histfile,fitfile,tnpBins['bins'][ib],sample.mass_min,sample.mass_max,sample.fitfunction,args.doDraw)
-                '''
-                if 'altsig' not in flag:
-                    tnpRoot.histFitter_Norminal(histfile,fitfile,tnpBins['bins'][ib],sample.mass_min,sample.mass_max,sample.fitfunction,args.doDraw)
+                #tnpRoot.histFitter_Norminal(histfile,fitfile,tnpBins['bins'][ib],sample.mass_min,sample.mass_max,sample.fitfunction,args.doDraw)
+                if 'genmc' in flag:
+                    #tnpRoot.histFitter_Norminal(histfile,fitfile,tnpBins['bins'][ib],sample.mass_min,sample.mass_max,sample.fitfunction,args.doDraw)
+                    continue
                 else:
-                    tnpRoot.histFitter_AltSig(histfile,fitfile,tnpBins['bins'][ib],sample.mass_min,sample.mass_max,sample.fitfunction,args.doDraw)
-                '''
+                    tnpRoot.histFitter_GenConv(histfile,fitfile,tnpBins['bins'][ib],sample.mass_min,sample.mass_max,sample.fitfunction,args.doDraw,args.doCnC,sample.CnC_min,sample.CnC_max)
 
 ####################################################################
 ##### dumping plots
@@ -192,6 +196,8 @@ if  args.doPlot:
     if args.condor:
         waiting_list=[]
         for flag,sample in tnpConf.flags.items() if args.flag is None else [(args.flag,tnpConf.flags[args.flag])]:
+            if 'genmc' in flag:
+                continue
             waiting_list.append(subprocess.check_output('condor_submit ARGU="'+args.settings+' --doPlot --flag '+flag+' '+iBinlist+' --subjob " etc/scripts/condor.jds -queue 1|tail -n 1|awk \'{print $NF}\'|sed "s/[^0-9]//g"',shell=True).strip())
         condor_wait(waiting_list)
     else:
@@ -209,10 +215,10 @@ if  args.doPlot:
                     tnpRoot.histPlotter( fitfile, tnpBins['bins'][ib], plottingDir )
                     pngzip.write('%s/%s.png' %(plottingDir,tnpBins['bins'][ib]['name']))
 
-                    os.remove('%s/%s.png' %(plottingDir,tnpBins['bins'][ib]['name'])) # To save fitcanvas only in zip file. (They are too many to view on web)
+                    #os.remove('%s/%s.png' %(plottingDir,tnpBins['bins'][ib]['name'])) # To save fitcanvas only in zip file. (They are too many to view on web)
                 pngzip.write('%s/index.php' % plottingDir)
                 os.remove('%s/index.php' % plottingDir)
-                os.rmdir('%s/' %plottingDir)
+                #os.rmdir('%s/' %plottingDir)
             print ' ===> Plots saved in <======='
             print fitzip
 
@@ -265,8 +271,16 @@ if args.sumUp:
                 line_last=['Average', 'error:']
                 line_last+=['%.6f (stat)'%(sum(erroravg_stat)/len(erroravg_stat)),'%.6f (syst)'%(sum(erroravg_sys)/len(erroravg_sys)),'%.6f (total)'%(sum(erroravg_total)/len(erroravg_total))]
                 fOut.write("\t".join(line_last)+'\n')
+
+        fOut.write("\nTnP Configurations \n")
+        fOut.write("Event Selection(Data) : %s \n" %tnpConf.eventexp)
+        fOut.write("Event Selection(MC) : %s \n" %tnpConf.eventexpMC)
+        fOut.write("Passing Probe Condtion : %s \n" %tnpConf.passcondition)
+        fOut.write("Input file(Data) : %s \n" %(tnpConf.wonjuntnpdir+tnpConf.filename))
+        fOut.write("Input file(MC) : %s \n" %(tnpConf.wonjuntnpdir+tnpConf.filenameMC))
+        fOut.write("Binnings : %s \n" %tnpConf.biningDef)
+        print 'Eff, configs are saved in file : ',  effFileName
         fOut.close()
-        print 'Eff is saved in file : ',  effFileName
 
     fOut=rt.TFile('%s/result.root'%(tnpConf.baseOutDir),'recreate')
     effihists=[]
@@ -334,6 +348,8 @@ if args.sumUp:
 
 ##### Won added. To draw rootfiles per each systematics. -> Later, these will used in systematic study.
     for flag,sample in tnpConf.flags.items():
+        if 'genmc' in flag:
+            continue
         effReport = open('%s/%s/report.txt'%(tnpConf.baseOutDir,flag), 'w')
         tnpBins = pickle.load( open( '%s/%s/bining.pkl'%(tnpConf.baseOutDir,centralflag),'rb') )
         effReport.write('ibin\t'+'Eff\tErr\n')
@@ -343,6 +359,8 @@ if args.sumUp:
         effReport.close()
 
     for flag,sample in tnpConf.flags.items():
+        if 'genmc' in flag:
+            continue
         fOut_stat=rt.TFile('%s/%s/result_stat.root'%(tnpConf.baseOutDir,flag),'recreate')
         effReport ='%s/%s/report.txt' % (tnpConf.baseOutDir,flag)
         tnpBins = pickle.load( open( '%s/%s/bining.pkl'%(tnpConf.baseOutDir,flag),'rb') )
