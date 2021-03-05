@@ -12,9 +12,7 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
   vector<double> eta = { -2.4, -2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, -1.6, -1.5, -1.4, -1.3, -1.2, -1.1, -1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4 };
   vector<double> pt = {10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 120 };
   if(eff == "Mu17") pt = { 14, 16, 18, 20, 25, 30, 35, 40, 45, 50, 60, 120 };
-  else if(eff == "IsoMu27") pt = {29, 32, 35, 40, 45, 50, 60, 120 };
-  else if(eff == "IsoMu24") pt = {20, 22, 24, 26, 28, 30, 35, 40, 45, 50, 60, 120 };
-  else if(eff == "IsoMu2427") pt = {20, 22, 24, 26, 28, 30, 35, 40, 45, 50, 60, 120 };
+  else if(eff.Contains("IsoMu")) pt = {20, 22, 24, 26, 28, 30, 35, 40, 45, 50, 60, 120 };
   vector<TString> charge = {"+", "-"};
   if(Charge == "+") charge = {"+"};
   else if(Charge == "-") charge = {"-"};
@@ -22,6 +20,10 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
   TString workingDir = DataPeriod+"_"+eff;
   TString DataPeriod2 = DataPeriod;
   if(DataPeriod.Contains("UL")) DataPeriod2.Remove(0,2);
+  double luminosity = 4.794 + 9.631 + 4.248 + 9.314 + 13.539; // 41.526
+  if(DataPeriod.Contains("2016a")) luminosity = 5.750 + 2.573 + 4.242 + 4.025 + 2.667; // 19.257
+  if(DataPeriod.Contains("2016b")) luminosity = 0.414 + 7.576 + 8.651; // 16.641
+  if(DataPeriod.Contains("2018")) luminosity = 13.977 + 7.058 + 6.895 + 31.742; // 59.672
 
   for(unsigned int i_charge = 0; i_charge<charge.size(); i_charge++){
   
@@ -67,15 +69,15 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       eff_mc_stat->SetMarkerStyle(21);
       eff_mc_stat->SetMarkerSize(1);
 
-      eff_data_syst->SetFillColorAlpha(kRed, 0.35);
-      eff_data_syst->SetFillStyle(3244);
-      eff_mc_syst->SetFillColorAlpha(kGreen+2, 0.5);
-      eff_mc_syst->SetFillStyle(3244);
+      eff_data->SetFillColorAlpha(kRed, 0.35);
+      eff_data->SetFillStyle(3001);
+      eff_mc->SetFillColorAlpha(kGreen+2, 0.5);
+      eff_mc->SetFillStyle(3001);
 
       eff_data_stat->Draw("p");
       eff_mc_stat->Draw("psame");  
-      eff_data_syst->Draw("E2same");
-      eff_mc_syst->Draw("E2same");
+      eff_data->Draw("E2same");
+      eff_mc->Draw("E2same");
 
       TLegend *lg = new TLegend(0.6, 0.1, 0.9, 0.3);
       lg->SetFillStyle(0);
@@ -90,19 +92,24 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 
       c1_down->cd();
     
-      TH1D *ratio = (TH1D*)eff_data_stat->Clone();
-      ratio->Divide(eff_mc_stat);
-      ratio->SetLineWidth(2);
-      ratio->SetLineColor(kBlack);
-      ratio->SetMarkerColor(kBlack);
-      ratio->SetMarkerStyle(20);
-      ratio->SetMarkerSize(1.6);
-      ratio->Draw("p");
-      ratio->GetXaxis()->SetTitle("p_{T}(#mu^{"+charge.at(i_charge)+"}) [GeV]");
-      ratio->GetYaxis()->SetTitle("Data/MC");
-      ratio->GetYaxis()->SetRangeUser(0.9, 1.1);
+      TH1D *ratio_stat = (TH1D*)eff_data_stat->Clone();
+      ratio_stat->Divide(eff_mc_stat);
+      ratio_stat->SetLineWidth(2);
+      ratio_stat->SetLineColor(kBlack);
+      ratio_stat->SetMarkerColor(kBlack);
+      ratio_stat->SetMarkerStyle(20);
+      ratio_stat->SetMarkerSize(1.3);
+      ratio_stat->Draw("p");
+      TH1D *ratio = (TH1D*)eff_data->Clone();
+      ratio->Divide(eff_mc);
+      ratio->SetFillColorAlpha(kRed, 0.35);
+      ratio->SetFillStyle(3001);
+      ratio->Draw("E2same");
+      ratio_stat->GetXaxis()->SetTitle("p_{T}(#mu^{"+charge.at(i_charge)+"}) [GeV]");
+      ratio_stat->GetYaxis()->SetTitle("Data/MC");
+      ratio_stat->GetYaxis()->SetRangeUser(0.88, 1.12);
 
-      hist_axis(eff_data_stat, ratio);
+      hist_axis(eff_data_stat, ratio_stat);
 
       TLine line(pt.at(0), 1, 120, 1);
       line.SetLineWidth(1);
@@ -117,17 +124,15 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       latex_selection.SetNDC();
 
       latex_CMSPriliminary.SetTextSize(0.045);
-      latex_CMSPriliminary.DrawLatex(0.1, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+      latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
       latex_Lumi.SetTextSize(0.03);
-      //latex_Lumi.DrawLatex(0.73, 0.965, "45.39 fb^{-1} (13 TeV)");
-      latex_Lumi.DrawLatex(0.73, 0.965, "Run "+DataPeriod2+" (13 TeV)");
+      latex_Lumi.DrawLatex(0.6, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
       latex_etacut.SetTextSize(0.03);
       latex_etacut.DrawLatex(0.73, 0.92, TString::Format("%0.2f",eta.at(i_eta))+" < eta < "+TString::Format("%.2f",eta.at(i_eta+1)));
       latex_selection.SetTextSize(0.04); //original size 0.03 and position (0.125,0.92)
       latex_selection.DrawLatex(0.14, 0.92, eff+" Efficiency");
-      //latex_selection.DrawLatex(0.14, 0.90, "IDISO Efficiency");
 
-      TString plotDir = workingDir+"_"+charge.at(i_charge)+"/Plots/Eff_vs_pT/";
+      TString plotDir = workingDir+"_"+charge.at(i_charge)+"/Plots/Efficiency_1D/";
       gSystem->mkdir(plotDir,kTRUE);
       TString name = plotDir+"eta"+TString::Format("%d",i_eta)+"_"+TString::Format("%.2f",eta.at(i_eta))+"to"+TString::Format("%.2f",eta.at(i_eta+1));
       c_eff->SaveAs(name+".png");
@@ -172,16 +177,16 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       eff_mc_stat->SetMarkerStyle(21);
       eff_mc_stat->SetMarkerSize(1);
 
-      eff_data_syst->SetFillColorAlpha(kRed, 0.35);
-      eff_data_syst->SetFillStyle(3244);
-      eff_mc_syst->SetFillColorAlpha(kGreen+2, 0.5);
-      eff_mc_syst->SetFillStyle(3244);
+      eff_data->SetFillColorAlpha(kRed, 0.35);
+      eff_data->SetFillStyle(3001);
+      eff_mc->SetFillColorAlpha(kGreen+2, 0.5);
+      eff_mc->SetFillStyle(3001);
 
       eff_data_stat->GetXaxis()->SetRangeUser(-3.0, 3.0);
       eff_data_stat->Draw("p");
       eff_mc_stat->Draw("psame");  
-      eff_data_syst->Draw("E2same");
-      eff_mc_syst->Draw("E2same");
+      eff_data->Draw("E2same");
+      eff_mc->Draw("E2same");
 
       TLegend *lg = new TLegend(0.6, 0.1, 0.9, 0.3);
       lg->SetFillStyle(0);
@@ -192,23 +197,28 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 
       eff_data_stat->SetTitle("");
       eff_data_stat->GetYaxis()->SetTitle("Efficiency");
-      eff_data_stat->GetYaxis()->SetRangeUser(0.6, 1.1);
+      eff_data_stat->GetYaxis()->SetRangeUser(0.5, 1.1);
       c1_down->cd();
     
-      TH1D *ratio = (TH1D*)eff_data_stat->Clone();
-      ratio->Divide(eff_mc_stat);
-      ratio->SetLineWidth(2);
-      ratio->SetLineColor(kBlack);
-      ratio->SetMarkerColor(kBlack);
-      ratio->SetMarkerStyle(20);
-      ratio->SetMarkerSize(1.6);
-      ratio->GetXaxis()->SetRangeUser(-3.0, 3.0);
-      ratio->Draw("p");
-      ratio->GetXaxis()->SetTitle("#eta(#mu^{"+charge.at(i_charge)+"})");
-      ratio->GetYaxis()->SetTitle("Data/MC");
-      ratio->GetYaxis()->SetRangeUser(0.9, 1.1);
+      TH1D *ratio_stat = (TH1D*)eff_data_stat->Clone();
+      ratio_stat->Divide(eff_mc_stat);
+      ratio_stat->SetLineWidth(2);
+      ratio_stat->SetLineColor(kBlack);
+      ratio_stat->SetMarkerColor(kBlack);
+      ratio_stat->SetMarkerStyle(20);
+      ratio_stat->SetMarkerSize(1.3);
+      ratio_stat->GetXaxis()->SetRangeUser(-3.0, 3.0);
+      ratio_stat->Draw("p");
+      TH1D *ratio = (TH1D*)eff_data->Clone();
+      ratio->Divide(eff_mc);
+      ratio->SetFillColorAlpha(kRed, 0.35);
+      ratio->SetFillStyle(3001);
+      ratio->Draw("E2same");
+      ratio_stat->GetXaxis()->SetTitle("#eta(#mu^{"+charge.at(i_charge)+"})");
+      ratio_stat->GetYaxis()->SetTitle("Data/MC");
+      ratio_stat->GetYaxis()->SetRangeUser(0.88, 1.12);
 
-      hist_axis(eff_data_stat, ratio);
+      hist_axis(eff_data_stat, ratio_stat);
 
       TLine line(-2.5, 1, 2.5, 1);
       line.SetLineWidth(1);
@@ -223,17 +233,15 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       latex_selection.SetNDC();
 
       latex_CMSPriliminary.SetTextSize(0.045);
-      latex_CMSPriliminary.DrawLatex(0.1, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+      latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
       latex_Lumi.SetTextSize(0.03);
-      //latex_Lumi.DrawLatex(0.73, 0.965, "45.39 fb^{-1} (13 TeV)");
-      latex_Lumi.DrawLatex(0.73, 0.965, "Run "+DataPeriod2+" (13 TeV)");
+      latex_Lumi.DrawLatex(0.6, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
       latex_ptcut.SetTextSize(0.03);
       latex_ptcut.DrawLatex(0.73, 0.92, TString::Format("%.0f",pt.at(i_pt))+" < p_{T} < "+TString::Format("%.0f",pt.at(i_pt+1))+" [GeV]");
       latex_selection.SetTextSize(0.04); //original size 0.03 and position (0.125,0.92)
       latex_selection.DrawLatex(0.14, 0.92, eff+" Efficiency");
-      //latex_selection.DrawLatex(0.14, 0.90, "IDISO Efficiency");
       
-      TString plotDir = workingDir+"_"+charge.at(i_charge)+"/Plots/Eff_vs_eta/";
+      TString plotDir = workingDir+"_"+charge.at(i_charge)+"/Plots/Efficiency_1D/";
       gSystem->mkdir(plotDir,kTRUE);
       TString name = plotDir+"pt"+TString::Format("%d",i_pt)+"_"+TString::Format("%.2f",pt.at(i_pt))+"to"+TString::Format("%.2f",pt.at(i_pt+1));
       c_eff->SaveAs(name+".png");
@@ -260,7 +268,7 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 
       if(!DoDrawChargeAsym) break;
       cout<<"\nInputs : DataPeriod = "+DataPeriod+", "+eff+" Charge Asymmetry of efficiencies between +muons and -muons of "+data.at(i_data)+" as a function of eta\n\n";
-      TString plotDir = workingDir+"_+/Plots/Eff_ChargeAsym/"+data.at(i_data)+"/";
+      TString plotDir = workingDir+"_+/Plots/ChargeAsym_Eff/"+data.at(i_data)+"/";
       gSystem->mkdir(plotDir,kTRUE);
 
       // Charge Asym vs. eta
@@ -295,42 +303,47 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
         eff_stat_minus->SetMarkerStyle(21);
         eff_stat_minus->SetMarkerSize(1);
 
-        eff_syst_plus->SetFillColorAlpha(kRed, 0.35);
-        eff_syst_plus->SetFillStyle(3244);
-        eff_syst_minus->SetFillColorAlpha(kBlue, 0.5);
-        eff_syst_minus->SetFillStyle(3244);
+        eff_plus->SetFillColorAlpha(kRed, 0.35);
+        eff_plus->SetFillStyle(3001);
+        eff_minus->SetFillColorAlpha(kBlue, 0.5);
+        eff_minus->SetFillStyle(3001);
 
         eff_stat_plus->Draw("p");
         eff_stat_minus->Draw("psame");  
-        eff_syst_plus->Draw("E2same");
-        eff_syst_minus->Draw("E2same");
+        eff_plus->Draw("E2same");
+        eff_minus->Draw("E2same");
 
         TLegend *lg = new TLegend(0.6, 0.1, 0.9, 0.3);
         lg->SetFillStyle(0);
         lg->SetBorderSize(0);
-        lg->AddEntry(eff_stat_plus, data.at(i_data)+" + #mu     ", "lp");
-        lg->AddEntry(eff_stat_minus, data.at(i_data)+" - #mu     ", "lp");
+        lg->AddEntry(eff_stat_plus, data.at(i_data)+" #mu^{+}     ", "lp");
+        lg->AddEntry(eff_stat_minus, data.at(i_data)+" #mu^{-}     ", "lp");
         lg->Draw();
 
         eff_stat_plus->SetTitle("");
-        eff_stat_plus->GetYaxis()->SetTitle("Data Efficiency");
+        eff_stat_plus->GetYaxis()->SetTitle("Efficiency");
         eff_stat_plus->GetYaxis()->SetRangeUser(0.5, 1.1);
 
         c1_down->cd();
     
-        TH1D *ratio = (TH1D*)eff_stat_plus->Clone();
-        ratio->Divide(eff_stat_minus);
-        ratio->SetLineWidth(2);
-        ratio->SetLineColor(kBlack);
-        ratio->SetMarkerColor(kBlack);
-        ratio->SetMarkerStyle(20);
-        ratio->SetMarkerSize(1.6);
-        ratio->Draw("p");
-        ratio->GetXaxis()->SetTitle("#eta(#mu)");
-        ratio->GetYaxis()->SetTitle("+/-");
-        ratio->GetYaxis()->SetRangeUser(0.9, 1.1);
+        TH1D *ratio_stat = (TH1D*)eff_stat_plus->Clone();
+        ratio_stat->Divide(eff_stat_minus);
+        ratio_stat->SetLineWidth(2);
+        ratio_stat->SetLineColor(kBlack);
+        ratio_stat->SetMarkerColor(kBlack);
+        ratio_stat->SetMarkerStyle(20);
+        ratio_stat->SetMarkerSize(1.3);
+        ratio_stat->Draw("p");
+	TH1D *ratio = (TH1D*)eff_plus->Clone();
+	ratio->Divide(eff_minus);
+	ratio->SetFillColorAlpha(kRed, 0.35);
+	ratio->SetFillStyle(3001);
+	ratio->Draw("E2same");
+        ratio_stat->GetXaxis()->SetTitle("#eta(#mu)");
+        ratio_stat->GetYaxis()->SetTitle("+/-");
+        ratio_stat->GetYaxis()->SetRangeUser(0.88, 1.12);
 
-        hist_axis(eff_stat_plus, ratio);
+        hist_axis(eff_stat_plus, ratio_stat);
 
         TLine line(-2.5, 1, 2.5, 1);
         line.SetLineWidth(1);
@@ -344,10 +357,10 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
         latex_ptcut.SetNDC();
         latex_selection.SetNDC();
 
-        latex_CMSPriliminary.SetTextSize(0.045);
-        latex_CMSPriliminary.DrawLatex(0.1, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
-        latex_Lumi.SetTextSize(0.03);
-        latex_Lumi.DrawLatex(0.73, 0.965, "45.39 fb^{-1} (13 TeV)");
+	latex_CMSPriliminary.SetTextSize(0.045);
+	latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+	latex_Lumi.SetTextSize(0.03);
+	latex_Lumi.DrawLatex(0.6, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
         latex_ptcut.SetTextSize(0.03);
         latex_ptcut.DrawLatex(0.73, 0.92, TString::Format("%.0f",pt.at(i_pt))+" < p_{T} < "+TString::Format("%.0f",pt.at(i_pt+1))+" [GeV]");
         latex_selection.SetTextSize(0.04);
@@ -390,42 +403,47 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
         eff_stat_minus->SetMarkerStyle(21);
         eff_stat_minus->SetMarkerSize(1);
 
-        eff_syst_plus->SetFillColorAlpha(kRed, 0.35);
-        eff_syst_plus->SetFillStyle(3244);
-        eff_syst_minus->SetFillColorAlpha(kBlue, 0.5);
-        eff_syst_minus->SetFillStyle(3244);
+        eff_plus->SetFillColorAlpha(kRed, 0.35);
+        eff_plus->SetFillStyle(3001);
+        eff_minus->SetFillColorAlpha(kBlue, 0.5);
+        eff_minus->SetFillStyle(3001);
 
         eff_stat_plus->Draw("p");
         eff_stat_minus->Draw("psame");  
-        eff_syst_plus->Draw("E2same");
-        eff_syst_minus->Draw("E2same");
+        eff_plus->Draw("E2same");
+        eff_minus->Draw("E2same");
 
         TLegend *lg = new TLegend(0.6, 0.1, 0.9, 0.3);
         lg->SetFillStyle(0);
         lg->SetBorderSize(0);
-        lg->AddEntry(eff_stat_plus, data.at(i_data)+" + #mu     ", "lp");
-        lg->AddEntry(eff_stat_minus, data.at(i_data)+" - #mu     ", "lp");
+        lg->AddEntry(eff_stat_plus, data.at(i_data)+" #mu^{+}     ", "lp");
+        lg->AddEntry(eff_stat_minus, data.at(i_data)+" #mu^{-}     ", "lp");
         lg->Draw();
 
         eff_stat_plus->SetTitle("");
-        eff_stat_plus->GetYaxis()->SetTitle("Data Efficiency");
+        eff_stat_plus->GetYaxis()->SetTitle("Efficiency");
         eff_stat_plus->GetYaxis()->SetRangeUser(0.5, 1.1);
 
         c1_down->cd();
     
-        TH1D *ratio = (TH1D*)eff_stat_plus->Clone();
-        ratio->Divide(eff_stat_minus);
-        ratio->SetLineWidth(2);
-        ratio->SetLineColor(kBlack);
-        ratio->SetMarkerColor(kBlack);
-        ratio->SetMarkerStyle(20);
-        ratio->SetMarkerSize(1.6);
-        ratio->Draw("p");
-        ratio->GetXaxis()->SetTitle("p_{T}(#mu) [GeV]");
-        ratio->GetYaxis()->SetTitle("+/-");
-        ratio->GetYaxis()->SetRangeUser(0.9, 1.1);
+        TH1D *ratio_stat = (TH1D*)eff_stat_plus->Clone();
+        ratio_stat->Divide(eff_stat_minus);
+        ratio_stat->SetLineWidth(2);
+        ratio_stat->SetLineColor(kBlack);
+        ratio_stat->SetMarkerColor(kBlack);
+        ratio_stat->SetMarkerStyle(20);
+        ratio_stat->SetMarkerSize(1.3);
+        ratio_stat->Draw("p");
+	TH1D *ratio = (TH1D*)eff_plus->Clone();
+	ratio->Divide(eff_minus);
+	ratio->SetFillColorAlpha(kRed, 0.35);
+	ratio->SetFillStyle(3001);
+	ratio->Draw("E2same");
+        ratio_stat->GetXaxis()->SetTitle("p_{T}(#mu) [GeV]");
+        ratio_stat->GetYaxis()->SetTitle("+/-");
+        ratio_stat->GetYaxis()->SetRangeUser(0.88, 1.12);
 
-        hist_axis(eff_stat_plus, ratio);
+        hist_axis(eff_stat_plus, ratio_stat);
 
         TLine line(pt.at(0), 1, 120, 1);
         line.SetLineWidth(1);
@@ -439,14 +457,14 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
         latex_etacut.SetNDC();
         latex_selection.SetNDC();
 
-        latex_CMSPriliminary.SetTextSize(0.045);
-        latex_CMSPriliminary.DrawLatex(0.1, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
-        latex_Lumi.SetTextSize(0.03);
-        latex_Lumi.DrawLatex(0.73, 0.965, "45.39 fb^{-1} (13 TeV)");
-        latex_etacut.SetTextSize(0.03);
-        latex_etacut.DrawLatex(0.73, 0.92, TString::Format("%.1f",eta.at(i_eta))+" < eta < "+TString::Format("%.1f",eta.at(i_eta+1)));
-        latex_selection.SetTextSize(0.03);
-        latex_selection.DrawLatex(0.125, 0.92, eff+" Efficiency");
+	latex_CMSPriliminary.SetTextSize(0.045);
+	latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+	latex_Lumi.SetTextSize(0.03);
+	latex_Lumi.DrawLatex(0.6, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
+	latex_etacut.SetTextSize(0.03);
+	latex_etacut.DrawLatex(0.73, 0.92, TString::Format("%0.2f",eta.at(i_eta))+" < eta < "+TString::Format("%.2f",eta.at(i_eta+1)));
+	latex_selection.SetTextSize(0.04);
+	latex_selection.DrawLatex(0.14, 0.92, eff+" Efficiency");
 
         TString name = plotDir+"eta"+TString::Format("%d",i_eta)+"_"+TString::Format("%.1f",eta.at(i_eta))+"to"+TString::Format("%.1f",eta.at(i_eta+1));
         c_eff->SaveAs(name+".png");
@@ -457,7 +475,7 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
     // 2D Charge Asym
     cout<<"\nInputs : DataPeriod = "+DataPeriod+", "+eff+" Efficiencies of muons\n\n";
     vector<TString> things = {"data", "mc", "SF" };
-    TString plotDir = workingDir+"_+/Plots/Eff_ChargeAsym/";
+    TString plotDir = workingDir+"_+/Plots/ChargeAsym_Eff/";
 
     for(unsigned int i=0; i<things.size(); i++){
 
@@ -517,10 +535,14 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
   double GetMaximum(TH1D* hist);
   double GetMaximum(TGraphAsymmErrors *a);
 
-  vector< vector<TString> > vsysts = { {"Central"}, {"NMassBins_30", "NMassBins_50"}, {"MassRange_Broad", "MassRange_Narrow"}, {"TagIso_0p10", "TagIso_0p20"},   { "SignalShape" } };
+  vector< vector<TString> > vsysts = { {"Central"}, {"NMassBins_50", "NMassBins_75"}, {"MassRange_Broad", "MassRange_Narrow"}, {"TagIso_0p10", "TagIso_0p20"},   { "SignalShape" } };
   vector< vector<Color_t> > vcolors = {{ kBlack  }, {    kRed    ,       kOrange   }, {      kYellow,           kGreen      }, {    kViolet,      kGray     },   {     kBlue     } };
-  vector< vector<TString> > vsystnames = {{  ""  }, { "_massbin30",   "_massbin50" }, {   "_massbroad",      "_massnarrow"  }, { "_tagiso010",  "_tagiso020"},   {   "_altsig"   } };
-
+  vector< vector<TString> > vsystnames = {{  ""  }, { "_massbin50",   "_massbin75" }, {   "_massbroad",      "_massnarrow"  }, { "_tagiso010",  "_tagiso020"},   {   "_altsig"   } };
+  if(eff.Contains("Mu")){
+    vsysts = { {"Central"}, {"MassRange_Broad", "MassRange_Narrow"}, {"TagIso_0p10", "TagIso_0p20"} };
+    vcolors = {{ kBlack  }, {      kYellow,           kGreen      }, {    kRed,           kBlue   } };
+    vsystnames = {{  ""  }, {   "_massbroad",      "_massnarrow"  }, { "_tagiso010",  "_tagiso020"} };
+  }
   for(unsigned int i_charge = 0; i_charge<charge.size(); i_charge++){
     vector<double> someerror_Data = {};
     vector<double> someerror_MC = {};
@@ -528,7 +550,6 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
     gSystem->mkdir(plotDir,kTRUE);
 
     for(unsigned int i_pt = 0; i_pt<pt.size()-1; i_pt++){
-      if(eff == "Turnon_Mu17") return;
       TString binname = "pt"+TString::Format("%.0f",pt.at(i_pt))+"to"+TString::Format("%.0f",pt.at(i_pt+1));
 
       // Canvas Setting
@@ -567,6 +588,14 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       TLegend *lg = new TLegend(0.6, 0.1, 0.93, 0.5);
       lg->SetFillStyle(0);
       lg->SetBorderSize(0);
+
+      // LaTex
+      TLatex latex_CMSPriliminary, latex_Lumi, latex_ptcut, latex_selection;
+      latex_CMSPriliminary.SetNDC();
+      latex_Lumi.SetNDC();
+      latex_ptcut.SetNDC();
+      latex_selection.SetNDC();
+
       for(unsigned int i_vsyst=0; i_vsyst<vsysts.size(); i_vsyst++){
 	vector<TString> systs = vsysts.at(i_vsyst);
 	vector<Color_t> colors = vcolors.at(i_vsyst);
@@ -604,10 +633,20 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 	  c_Data_up->cd();
 	  gr_Data->Draw(DrawOption);
 	  if(i_vsyst==0 && i_syst==0){
-	    gr_Data->GetYaxis()->SetRangeUser(0., 1.0);
+	    gr_Data->GetYaxis()->SetRangeUser(0., 1.1);
 	    gr_Data->GetYaxis()->SetTitle("Efficiency");
 	  }
 	  c_Data->cd();
+
+	  latex_CMSPriliminary.SetTextSize(0.045);
+	  latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+	  latex_Lumi.SetTextSize(0.03);
+	  latex_Lumi.DrawLatex(0.6, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
+	  latex_ptcut.SetTextSize(0.03);
+	  latex_ptcut.DrawLatex(0.73, 0.92, TString::Format("%.0f",pt.at(i_pt))+" < p_{T} < "+TString::Format("%.0f",pt.at(i_pt+1))+" [GeV]");
+	  latex_selection.SetTextSize(0.04);
+	  latex_selection.DrawLatex(0.14, 0.92, eff+" Data Efficiency");
+
 	  c_Data_down->cd();
 	  //==== gr_diff_Data : Relative Difference
 	  TGraphAsymmErrors *gr_diff_Data = GraphSubtract( gr_Data, gr_Data_Central, true );
@@ -619,7 +658,7 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 	  /////gr_diff_Data->SetMarkerStyle(21);
 	  if(i_vsyst==0 && i_syst==0){
 	    gr_diff_Data->GetXaxis()->SetTitle("#eta(#mu)");
-	    gr_diff_Data->GetYaxis()->SetRangeUser(-3, 3);
+	    gr_diff_Data->GetYaxis()->SetRangeUser(-1.5, 1.5);
 	    gr_diff_Data->GetYaxis()->SetTitle("Rel. Diff. [%]");
 	  }
 	  //==== Error only plot
@@ -632,12 +671,13 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 	    gr_error_Data->SetLineColor(kBlue);
 	    gr_error_Data->SetMarkerColor(kBlue);
 	    gr_error_Data->SetLineWidth(3);
-	    gr_error_Data->Draw("ap");
 	    hist_axis(gr_error_Data);
+	    gr_error_Data->Draw("ap");
 	    gr_error_Data->GetXaxis()->SetTitle("#eta(#mu)");
 	    if(eff=="Mu17") gr_error_Data->GetXaxis()->SetRangeUser(19., 100.);
+	    gr_error_Data->GetYaxis()->SetTitleOffset(0.9);
 	    gr_error_Data->GetYaxis()->SetTitle("Rel. Diff. [%]");
-	    gr_error_Data->GetYaxis()->SetRangeUser(0., 4.);
+	    gr_error_Data->GetYaxis()->SetRangeUser(0., 2.5);
 
 	    gr_Data_TotSyst = (TGraphAsymmErrors*)gr_Data->Clone();
 	    EmptyGraph(gr_Data_TotSyst);
@@ -655,10 +695,20 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 	  c_MC_up->cd();
 	  gr_MC->Draw(DrawOption);
 	  if(i_vsyst==0 && i_syst==0){
-	    gr_MC->GetYaxis()->SetRangeUser(0., 1.0);
+	    gr_MC->GetYaxis()->SetRangeUser(0., 1.1);
 	    gr_MC->GetYaxis()->SetTitle("Efficiency");
 	  }
 	  c_MC->cd();
+
+	  latex_CMSPriliminary.SetTextSize(0.045);
+	  latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+	  latex_Lumi.SetTextSize(0.03);
+	  latex_Lumi.DrawLatex(0.6, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
+	  latex_ptcut.SetTextSize(0.03);
+	  latex_ptcut.DrawLatex(0.73, 0.92, TString::Format("%.0f",pt.at(i_pt))+" < p_{T} < "+TString::Format("%.0f",pt.at(i_pt+1))+" [GeV]");
+	  latex_selection.SetTextSize(0.04);
+	  latex_selection.DrawLatex(0.14, 0.92, eff+" MC Efficiency");
+
 	  c_MC_down->cd();
 	  //==== gr_diff_MC : Relative Difference
 	  TGraphAsymmErrors *gr_diff_MC = GraphSubtract( gr_MC, gr_MC_Central, true );
@@ -670,7 +720,7 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 	  ////gr_diff_MC->SetMarkerStyle(21);
 	  if(i_vsyst==0 && i_syst==0){
 	    gr_diff_MC->GetXaxis()->SetTitle("#eta(#mu)");
-	    gr_diff_MC->GetYaxis()->SetRangeUser(-3, 3);
+	    gr_diff_MC->GetYaxis()->SetRangeUser(-1.5, 1.5);
 	    gr_diff_MC->GetYaxis()->SetTitle("Rel. Diff. [%]");
 	  }
 	  //==== Error only plot
@@ -683,12 +733,13 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 	    gr_error_MC->SetLineColor(kBlue);
 	    gr_error_MC->SetMarkerColor(kBlue);
 	    gr_error_MC->SetLineWidth(3);
-	    gr_error_MC->Draw("ap");
 	    hist_axis(gr_error_MC);
+	    gr_error_MC->Draw("ap");
 	    gr_error_MC->GetXaxis()->SetTitle("#eta(#mu)");
 	    if(eff=="Mu17") gr_error_MC->GetXaxis()->SetRangeUser(19., 100.);
+	    gr_error_MC->GetYaxis()->SetTitleOffset(0.9);
 	    gr_error_MC->GetYaxis()->SetTitle("Rel. Diff. [%]");
-	    gr_error_MC->GetYaxis()->SetRangeUser(0., 4.);
+	    gr_error_MC->GetYaxis()->SetRangeUser(0., 2.5);
 
 	    gr_MC_TotSyst = (TGraphAsymmErrors*)gr_MC->Clone();
 	    EmptyGraph(gr_MC_TotSyst);
@@ -714,13 +765,21 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       c_Data->SaveAs(plotDir+"Data_"+binname+".png");
       //==== Error
       c_Data_err->cd();
+
+      latex_CMSPriliminary.SetTextSize(0.045);
+      latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+      latex_Lumi.SetTextSize(0.03);
+      latex_Lumi.DrawLatex(0.6, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
+      latex_ptcut.SetTextSize(0.03);
+      latex_ptcut.DrawLatex(0.73, 0.92, TString::Format("%.0f",pt.at(i_pt))+" < p_{T} < "+TString::Format("%.0f",pt.at(i_pt+1))+" [GeV]");
+      latex_selection.SetTextSize(0.04);
+      latex_selection.DrawLatex(0.14, 0.92, eff+" Data Efficiency");
+
       ScaleGraph(gr_Data_TotSyst, 100.);
       gr_Data_TotSyst->SetLineColor(kRed);
       gr_Data_TotSyst->SetMarkerColor(kRed);
       gr_Data_TotSyst->SetLineWidth(3);
       gr_Data_TotSyst->Draw("psame");
-      double y_error_max_Data = 1.2;
-      gr_error_Data->GetYaxis()->SetRangeUser(0., y_error_max_Data);
       //==== Sum
       TGraphAsymmErrors *gr_Data_AllError = (TGraphAsymmErrors *)gr_error_Data->Clone();
       for(int aaa=0; aaa<gr_Data_AllError->GetN(); aaa++){
@@ -757,13 +816,21 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       c_MC->SaveAs(plotDir+"MC_"+binname+".png");
       //==== Error
       c_MC_err->cd();
+
+      latex_CMSPriliminary.SetTextSize(0.045);
+      latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+      latex_Lumi.SetTextSize(0.03);
+      latex_Lumi.DrawLatex(0.6, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
+      latex_ptcut.SetTextSize(0.03);
+      latex_ptcut.DrawLatex(0.73, 0.92, TString::Format("%.0f",pt.at(i_pt))+" < p_{T} < "+TString::Format("%.0f",pt.at(i_pt+1))+" [GeV]");
+      latex_selection.SetTextSize(0.04);
+      latex_selection.DrawLatex(0.14, 0.92, eff+" MC Efficiency");
+
       ScaleGraph(gr_MC_TotSyst, 100.);
       gr_MC_TotSyst->SetLineColor(kRed);
       gr_MC_TotSyst->SetMarkerColor(kRed);
       gr_MC_TotSyst->SetLineWidth(3);
       gr_MC_TotSyst->Draw("psame");
-      double y_error_max_MC = 1.2;
-      gr_error_MC->GetYaxis()->SetRangeUser(0., y_error_max_MC);
       //==== Sum
       TGraphAsymmErrors *gr_MC_AllError = (TGraphAsymmErrors *)gr_error_MC->Clone();
       for(int aaa=0; aaa<gr_MC_AllError->GetN(); aaa++){
@@ -796,7 +863,7 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
 
     TCanvas *c_hoi = new TCanvas("c_MC", "", 1600, 800);
     TH1D *hoi_Data = new TH1D("hoi_Data", "" ,someerror_Data.size(),0,someerror_Data.size()-1);
-    TH1D *hoi_MC = new TH1D("hoi_MC", "" ,someerror_MC.size(),0,someerror_Data.size()-1);
+    TH1D *hoi_MC = new TH1D("hoi_MC", "" ,someerror_MC.size(),0,someerror_MC.size()-1);
 
     double YMax = 5.2;
     hoi_Data->GetYaxis()->SetRangeUser(0., YMax);
@@ -805,7 +872,6 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       hoi_Data->SetBinContent(i+1,someerror_Data.at(i));
       hoi_Data->GetYaxis()->SetTitle("Stat. + Syst. Uncertainty (%)");
       hoi_MC->SetBinContent(i+1,someerror_MC.at(i));
-      hoi_Data->GetYaxis()->SetTitle("Stat. + Syst. Uncertainty (%)");
     }
     canvas_margin(c_hoi);
     hist_axis(hoi_Data);
@@ -817,19 +883,19 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
     hoi_Data->Draw("hist");
     hoi_MC->Draw("same");
 
-    TLegend *hoi = new TLegend(0.9, 0.55, 0.99, 0.75);
+    TLegend *hoi = new TLegend(0.91, 0.55, 0.99, 0.75);
     hoi->SetFillStyle(0);
     hoi->SetBorderSize(0);
     hoi->AddEntry(hoi_Data, "Data", "lp");
     hoi->AddEntry(hoi_MC, "MC", "lp");
     hoi->Draw();
 
-    TLine line1(0,0.5,someerror_Data.size(),0.5);
+    TLine line1(0,0.5,someerror_Data.size()-1,0.5);
     line1.SetLineWidth(1);
     line1.SetLineColor(kBlue);
-    line1.DrawLine(0,1,someerror_Data.size(),1);
+    line1.DrawLine(0,1,someerror_Data.size()-1,1);
     line1.SetLineColor(kBlack);
-    line1.DrawLine(0,2,someerror_Data.size(),2);
+    line1.DrawLine(0,2,someerror_Data.size()-1,2);
     line1.SetLineColor(kGreen+2);
     line1.DrawClone("SAME");
     TLine line2(someerror_Data.size()-1,0,someerror_Data.size()-1,YMax);
@@ -844,13 +910,14 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
     line2.DrawLine(48*7-1,0,48*7-1,YMax);
     line2.DrawLine(48*8-1,0,48*8-1,YMax);
     line2.DrawLine(48*9-1,0,48*9-1,YMax);
-    line2.DrawClone("SAME");
-
+    
     TLatex latex_pt, latex_legend;
     latex_pt.SetNDC();
     latex_legend.SetNDC();
     latex_pt.SetTextSize(0.03);
-    if(eff == "Mu8" || eff == "IDISO"){
+    if(eff == "Mu8" || eff == "IDISO"){ // pt : 10 ~ 120 GeV Case [10 pt bins * 48 eta bins]
+      line2.DrawClone("SAME");
+
       latex_pt.DrawLatex(0.13, 0.9, "10 - 15");
       latex_pt.DrawLatex(0.13+0.08777, 0.9, "15 - 20");
       latex_pt.DrawLatex(0.13+0.08777*2, 0.9, "20 - 25");
@@ -861,35 +928,58 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       latex_pt.DrawLatex(0.13+0.08777*7, 0.9, "45 - 50");
       latex_pt.DrawLatex(0.13+0.08777*8, 0.9, "50 - 60");
       latex_pt.DrawLatex(0.92, 0.9, "60 -120");
+
+      latex_pt.DrawLatex(0.9, 0.84, "#scale[1.3]{ P_{T} [GeV]}");
+      latex_legend.SetTextSize(0.04);
+      latex_legend.DrawLatex(0.95, 0.01, "Bin #");
     }
-    else if(eff == "Mu17"){
-      latex_pt.DrawLatex(0.145, 0.9, "20 - 25");
-      latex_pt.DrawLatex(0.14+0.10857, 0.9, "25 - 30");
-      latex_pt.DrawLatex(0.14+0.10857*2, 0.9, "30 - 35");
-      latex_pt.DrawLatex(0.14+0.10857*3, 0.9, "35 - 40");
-      latex_pt.DrawLatex(0.14+0.10857*4, 0.9, "40 - 45");
-      latex_pt.DrawLatex(0.14+0.10857*5, 0.9, "45 - 50");
-      latex_pt.DrawLatex(0.14+0.10857*6, 0.9, "50 - 60");
-      latex_pt.DrawLatex(0.905, 0.9, "60 -120");
-    }
-    else{
-      if(DataPeriod2 == "2017"){
-	latex_pt.DrawLatex(0.15, 0.9, "29 - 32");
-	latex_pt.DrawLatex(0.15+0.125, 0.9, "32 - 35");
+    else if(eff == "Mu17" || eff.Contains("IsoMu")){ // pt : 14(20) ~ 120 GeV Case [11 pt bins * 48 eta bins]
+      line2.DrawLine(48*10-1,0,48*10-1,YMax);
+      line2.DrawClone("SAME");
+
+      if(eff == "Mu17"){
+	latex_pt.DrawLatex(0.13, 0.9, "14 - 16");
+	latex_pt.DrawLatex(0.13+0.079, 0.9, "16 - 18");
+	latex_pt.DrawLatex(0.13+0.079*2, 0.9, "18 - 20");
+	latex_pt.DrawLatex(0.13+0.079*3, 0.9, "20 - 25");
+	latex_pt.DrawLatex(0.13+0.079*4, 0.9, "25 - 30");
+	latex_pt.DrawLatex(0.13+0.079*5, 0.9, "30 - 35");
+	latex_pt.DrawLatex(0.13+0.079*6, 0.9, "35 - 40");
+	latex_pt.DrawLatex(0.13+0.079*7, 0.9, "40 - 45");
+	latex_pt.DrawLatex(0.13+0.079*8, 0.9, "45 - 50");
+	latex_pt.DrawLatex(0.13+0.079*9, 0.9, "50 - 60");
+	latex_pt.DrawLatex(0.92, 0.9, "60 -120");
       }
       else{
-	latex_pt.DrawLatex(0.15, 0.9, "26 - 30");
-	latex_pt.DrawLatex(0.15+0.125, 0.9, "30 - 35");
+	latex_pt.DrawLatex(0.13, 0.9, "20 - 22");
+	latex_pt.DrawLatex(0.13+0.079, 0.9, "22 - 24");
+	latex_pt.DrawLatex(0.13+0.079*2, 0.9, "24 - 26");
+	latex_pt.DrawLatex(0.13+0.079*3, 0.9, "26 - 28");
+	latex_pt.DrawLatex(0.13+0.079*4, 0.9, "28 - 30");
+	latex_pt.DrawLatex(0.13+0.079*5, 0.9, "30 - 35");
+	latex_pt.DrawLatex(0.13+0.079*6, 0.9, "35 - 40");
+	latex_pt.DrawLatex(0.13+0.079*7, 0.9, "40 - 45");
+	latex_pt.DrawLatex(0.13+0.079*8, 0.9, "45 - 50");
+	latex_pt.DrawLatex(0.13+0.079*9, 0.9, "50 - 60");
+	latex_pt.DrawLatex(0.92, 0.9, "60 -120");
       }
-      latex_pt.DrawLatex(0.15+0.125*2, 0.9, "35 - 40");
-      latex_pt.DrawLatex(0.15+0.125*3, 0.9, "40 - 45");
-      latex_pt.DrawLatex(0.15+0.125*4, 0.9, "45 - 50");
-      latex_pt.DrawLatex(0.15+0.125*5, 0.9, "50 - 60");
-      latex_pt.DrawLatex(0.9, 0.9, "60 -120");
+
+      latex_pt.DrawLatex(0.902, 0.84, "#scale[1.3]{ P_{T} [GeV]}");
+      latex_legend.SetTextSize(0.04);
+      latex_legend.DrawLatex(0.95, 0.01, "Bin #");
     }
-    latex_pt.DrawLatex(0.9, 0.84, "#scale[1.3]{ P_{T} [GeV]}");
-    latex_legend.SetTextSize(0.04);
-    latex_legend.DrawLatex(0.95, 0.01, "Bin #");
+
+    TLatex latex_CMSPriliminary, latex_Lumi, latex_selection;
+    latex_CMSPriliminary.SetNDC();
+    latex_Lumi.SetNDC();
+    latex_selection.SetNDC();
+
+    latex_CMSPriliminary.SetTextSize(0.045);
+    latex_CMSPriliminary.DrawLatex(0.115, 0.965, "#font[62]{CMS} #font[42]{#it{#scale[0.8]{Preliminary}}}");
+    latex_Lumi.SetTextSize(0.03);
+    latex_Lumi.DrawLatex(0.78, 0.965, "Run "+DataPeriod2+",  "+TString::Format("%.2f",luminosity)+" fb^{-1}  (13 TeV)");
+    latex_selection.SetTextSize(0.04);
+    latex_selection.DrawLatex(0.27, 0.965, eff+" Efficiency");
 
     c_hoi->SaveAs(plotDir+"1D_Diff.png");
     c_hoi->Close();
@@ -913,6 +1003,7 @@ TGraphAsymmErrors* ValuesToError(TGraphAsymmErrors* a, bool rel){
     yerr_high = a->GetErrorYhigh(i);
 
     double newval = sqrt((yerr_low*yerr_low+yerr_high*yerr_high)/2.);
+    if(y == 0.) y += 0.00001; //###CAUTION### the lowest pT bins can have zero-efficiencies in case of trigger
     if(rel) newval = newval/y;
 
     out->SetPoint(i, x, newval);
@@ -981,6 +1072,7 @@ void PickLargestError(TGraphAsymmErrors *central, TGraphAsymmErrors *previous, T
     central->GetPoint(i, x_central, y_central);
     previous->GetPoint(i, x_prev, y_prev);
     now->GetPoint(i, x_now, y_now);
+    if(y_central == 0.) y_central += 0.00001; //###CAUTION### the lowest pT bins can have zero-efficiencies in case of trigger
     double this_y = max( y_prev, fabs(y_now-y_central)/y_central );
     previous->SetPoint(i, x_prev, this_y);
   }
@@ -1050,6 +1142,7 @@ TGraphAsymmErrors* GraphSubtract(TGraphAsymmErrors *a, TGraphAsymmErrors *b, boo
     a->GetPoint(i, a_x, a_y);
     b->GetPoint(i, b_x, b_y);
     if(Rel==true){
+      if(b_y == 0.) b_y += 0.00001; //###CAUTION### the lowest pT bins can have zero-efficiencies in case of trigger
       gr_out->SetPoint( i, a_x, (a_y-b_y)/b_y );
     }
     else{

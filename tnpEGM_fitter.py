@@ -241,7 +241,8 @@ if args.sumUp:
         erroravg_total=[]
         for ib in range(len(tnpBins['bins'])):
             if ib == 0 :
-                fOut.write('ibin\tCentral\tStaterr\tSysterr\tTotalerr  [MassRange]\t[MassBin]\t[TagIso]\t[AltSig]   Syst/Stat\n')
+                if args.doCnC : fOut.write('ibin\tCentral\tStaterr\tSysterr\tTotalerr  [MassRange]\t[TagIso]             Syst/Stat\n')
+                else : fOut.write('ibin\tCentral\tStaterr\tSysterr\tTotalerr  [MassRange]\t[MassBin]\t[TagIso]\t[AltSig]   Syst/Stat\n')
             line=[]
             line.append(str(ib))
             centralval,centralerr = tnpRoot.GetEffi( '%s/%s/%s_fitresult.root'%(tnpConf.baseOutDir,centralflag,centralflag),tnpBins['bins'][ib]['name'])

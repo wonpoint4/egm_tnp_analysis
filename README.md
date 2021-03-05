@@ -17,6 +17,10 @@ Or
 
 >python tnpEGM_fitter.py etc/config/muonTnP_AFB.py --createBins --createHists --doFit --doPlot --sumUp --condor -n 20
 
+If you want Cut&Count instead of GenConv (default one, fitting with Gen MC shape as signal, exponential as bkg) add --doCnC
+
+>python tnpEGM_fitter.py etc/config/muonTnP_AFB.py --createBins --createHists --doFit --doPlot --sumUp --doCnC --condor -n 20
+
 ## Edit Configuration files
  * edit etc/config/@@@@@@@.py (examples) muonTnP_AFB.py
  * You can change muonTnP_AFB's settings. (Period, Measure, Charge)
