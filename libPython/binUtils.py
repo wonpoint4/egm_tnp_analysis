@@ -61,7 +61,8 @@ def createBins( bining, cut ):
                     binCut   = '%s >= %f && %s < %f' % (var,bins1D[ix[iv]],var,bins1D[ix[iv]+1])
                     binTitle = '%1.3f < %s < %1.3f'  % (bins1D[ix[iv]],var,bins1D[ix[iv]+1])
                 else:
-                    binCut   = '%s && %s >= %f && %s < %f' % (binCut  ,var,bins1D[ix[iv]],var,bins1D[ix[iv]+1])
+                    #binCut   = '%s && %s >= %f && %s < %f' % (binCut  ,var,bins1D[ix[iv]],var,bins1D[ix[iv]+1])
+                    binCut   = '%s * (%s >= %f && %s < %f)' % (binCut  ,var,bins1D[ix[iv]],var,bins1D[ix[iv]+1])
                     binTitle = '%s; %1.3f < %s < %1.3f'    % (binTitle,bins1D[ix[iv]],var,bins1D[ix[iv]+1])
                 binName  = '%s_%s_%1.2fTo%1.2f'  % (binName ,var,bins1D[ix[iv]],bins1D[ix[iv]+1])
                 binVars[var] = { 'min': bins1D[ix[iv]], 'max': bins1D[ix[iv]+1]}

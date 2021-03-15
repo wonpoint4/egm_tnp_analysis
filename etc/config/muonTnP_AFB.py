@@ -5,11 +5,11 @@ from libPython.tnpClassUtils import tnpSample
 
 #### Choose one of these ####################
 #Period = {'2016BF', '2016GH', '2017', '2018', 'UL2016a', 'UL2016b', 'UL2017', 'UL2018' }
-#Measure = {'IDISO', 'Mu17', 'Mu8', 'IsoMu24', 'IsoMu27' }
+#Measure = {'ID', 'Mu17', 'Mu8', 'IsoMu24', 'IsoMu27' }
 #Charge = {'+', '-', 'all' }
 
 Period = 'UL2018'
-Measure = 'IDISO'
+Measure = 'ID'
 Charge = '+'
 
 #############################################################
@@ -26,7 +26,7 @@ baseOutDir = Period+'_'+Measure+'_'+Charge+'_MiNNLO/'
 baseOutDir = Period+'_'+Measure+'_'+Charge+'/'
 
 passcondition = 'DoubleIsoMu17Mu8_IsoMu17leg || DoubleIsoMu17TkMu8_IsoMu17leg'
-eventexp = 'tag_IsoMu24==1 && tag_pt > 26 && mass > 60 && mass < 130 && tag_charge*charge < 0 && tag_combRelIsoPF04dBeta < 0.15 && Medium && relTkIso < 0.10 && pair_deltaR > 0.3'
+eventexp = '(tag_IsoMu24==1 && tag_pt > 26 && mass > 60 && mass < 130 && tag_charge*charge < 0 && tag_combRelIsoPF04dBeta < 0.15 && Medium && relTkIso < 0.10 && pair_deltaR > 0.3)'
 
 wonjuntnpdir = '/data9/Users/wonjun/public/TnP_Trees/'
 filename = 'TnPTreeZ_12Nov2019_UL2018_SingleMuon_Run2018ABCDv2.root'
@@ -46,7 +46,7 @@ elif Measure == 'IsoMu24' :
     passcondition = 'IsoMu24 || IsoTkMu24'
   else :
     passcondition = 'IsoMu24'
-elif Measure == 'IDISO' :
+elif Measure == 'ID' :
   passcondition = 'Medium && relTkIso < 0.10'
   eventexp = eventexp.replace('Medium && relTkIso < 0.10', 'TM')
 
@@ -61,7 +61,7 @@ if Period == "2016BF" :
   wonjuntnpdir = '/data9/Users/wonjun/public/TnP_Trees/TnPTreeZ_LegacyRereco07Aug17_SingleMuon_Run2016/'
   filename = 'TnPTreeZ_LegacyRereco07Aug17_SingleMuon_BCDEF.root'
   filenameMC = 'DY_Summer16PremixMoriond_weighted_BCDEF.root'
-  if Measure == 'IDISO':
+  if Measure == 'ID':
     passcondition = passcondition.replace('Medium','Medium2016') #From Simranjit's presentation
   else :
     eventexp = eventexp.replace('Medium','Medium2016')
@@ -84,7 +84,7 @@ elif Period == "UL2016a" :
   filename = 'TnPTreeZ_21Feb2020_UL2016_SingleMuon_Run2016BCDEF_HIPMv1.root'
   filenameMC = 'TnPTreeZ_106XSummer19_UL16RECOAPV_DYJetsToLL_M50_MadgraphMLM_WithWeights.root'
   ##filenameMC = 'TnPTreeZ_106XSummer19_UL16RECOAPV_DYJetsToMuMu_M50_powhegMiNNLO_WithWeights.root'
-  if Measure == 'IDISO':
+  if Measure == 'ID':
     passcondition = passcondition.replace('Medium','Medium2016') #From Simranjit's presentation
   else :
     eventexp = eventexp.replace('Medium','Medium2016')
@@ -100,13 +100,13 @@ elif Period == "UL2017" :
   filename = 'TnPTreeZ_09Aug2019_UL2017_SingleMuon_Run2017BCDEFv1.root'
   filenameMC = 'TnPTreeZ_106XSummer19_UL17RECO_DYJetsToLL_M50_MadgraphMLM_pdfwgt_F_WithWeights.root'
 
-eventexpMC = '('+eventexp+') * weight'
+eventexpMC = eventexp+' * (weight<4?weight:4)'
 eventexpGen = eventexpMC.replace('mass > 60', 'mcTrue && mass > 60')
 
 #############################################################
 ########## Binning Definition  [can be nD bining]
 #############################################################
-biningDef = [              ### For IDISO or Mu8 
+biningDef = [              ### For ID or Mu8 
     { 'var' : 'eta' , 'type': 'float', 'bins': [-2.4, -2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, -1.6, -1.5, -1.4, -1.3, -1.2, -1.1, -1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4] },
     { 'var' : 'pt' , 'type': 'float', 'bins': [10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 120] },
 ]
@@ -133,10 +133,10 @@ elif Measure == 'IsoMu24' or Measure == 'IsoMu2427' or Measure == 'IsoMu27':
 #############################################################
 ## Convolution with Gaussian, and Exponential for Bkg
 tnpParNomFit = [
-    "meanGaussP[0.0, -5.0,5.0]","sigmaGaussP[0.8, 0.5,2.5]",  ## [0.5, 0.4,5.0]
-    "meanGaussF[0.0, -5.0,5.0]","sigmaGaussF[0.7, 0.5,2.5]", ## [0.5, 0.4,5.0]
+    "meanGaussP[0.0, -5.0,5.0]","sigmaGaussP[0.8, 0.5,3.5]",  ## [0.5, 0.4,5.0]
+    "meanGaussF[0.0, -5.0,5.0]","sigmaGaussF[0.7, 0.5,3.5]", ## [0.5, 0.4,5.0]
     "aExpoP[-0.1, -1,0.1]",
-    "aExpoF[-0.1, -1,0.1]",
+    "aExpoF[-0.1, -1,0.1]", # Initial (-0.1)->(-0.3) is good when Refit
     "Gaussian::sigResPass(mass,meanGaussP,sigmaGaussP)",
     "Gaussian::sigResFail(mass,meanGaussF,sigmaGaussF)",
     "Exponential::backgroundPass(mass, aExpoP)",
@@ -144,10 +144,11 @@ tnpParNomFit = [
     ]
 ## Convolution with CBShape, and Exponential for Bkg
 tnpParNomFit2 = [
-    "meanCBP[0.0, -5.0,5.0]","sigmaCBP[1, 0.5,2.5]","aCBP[2.0, 1.2,3.5]",'nCBP[3, 0.1,5]',
-    "meanCBF[0.0, -5.0,5.0]","sigmaCBF[2, 0.5,2.5]","aCBF[2.0, 1.2,3.5]",'nCBF[3, 0.1,5]',
+    "meanCBP[0.0, -5.0,5.0]","sigmaCBP[1, 0.5,3.5]","aCBP[2.0, 1.2,3.5]",'nCBP[3, 0.1,5]',
+    "meanCBF[0.0, -5.0,5.0]","sigmaCBF[2, 0.5,3.5]","aCBF[2.0, 1.2,3.5]",'nCBF[3, 0.1,5]',
+#    "meanCBF[-0.0, -5.0,5.0]","sigmaCBF[2, 0.5,3.5]","aCBF[2.0, 1.2,3.5]",'nCBF[3, 0.1,5]',
     "aExpoP[-0.1, -1,0.1]",
-    "aExpoF[-0.1, -1,0.1]",
+    "aExpoF[-0.1, -1,0.01]", # Initial (-0.1)->(-0.3) is good when Refit
     "RooCBShape::sigResPass(mass,meanCBP,sigmaCBP,aCBP,nCBP)",
     "RooCBShape::sigResFail(mass,meanCBF,sigmaCBF,aCBF,nCBF)",
     "Exponential::backgroundPass(mass, aExpoP)",
@@ -224,6 +225,8 @@ flags = {
 systematicDef = {
     'data' : [['data_massbroad','data_massnarrow'], ['data_massbin50','data_massbin75'],['data_tagiso010','data_tagiso020'], ['data_altsig']],
     'mc' :   [['mc_massbroad','mc_massnarrow'],     ['mc_massbin50','mc_massbin75'],    ['mc_tagiso010','mc_tagiso020'],     ['mc_altsig']]
+#    'data' : [['data_massbroad','data_massnarrow'], ['data_tagiso010','data_tagiso020']],
+#    'mc' :   [['mc_massbroad','mc_massnarrow'],     ['mc_tagiso010','mc_tagiso020']]
 }
 
 #############################################################

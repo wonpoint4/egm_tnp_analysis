@@ -105,7 +105,6 @@ if args.createBins:
         print 'created dir: %s ' % outputDirectory
         print 'bining created successfully... '
 
-
 ####################################################################
 ##### Create Histograms
 ####################################################################
@@ -161,19 +160,6 @@ if  args.doFit:
             else:
                 waiting_list.append(subprocess.check_output('condor_submit ARGU="'+args.settings+' --doFit --flag '+flag+' '+iBinlist+' --subjob " etc/scripts/condor.jds -queue 1|tail -n 1|awk \'{print $NF}\'|sed "s/[^0-9]//g"',shell=True).strip())
         condor_wait(waiting_list)
-        '''
-        for flag,sample in tnpConf.flags.items() if args.flag is None else [(args.flag,tnpConf.flags[args.flag])]:
-            if 'genmc'  not in flag:
-                continue
-            waiting_list=[]
-            print 'Other sysetmatics are done'
-            fitfile='%s/%s/%s_fitresult.root'%(tnpConf.baseOutDir,flag,flag)
-            rootfile=rt.TFile(fitfile,"update")
-            rootfile.Close()
-            print 'Now submit ',flag
-            waiting_list.append(subprocess.check_output('condor_submit ARGU="'+args.settings+' --doFit --flag '+flag+' '+iBinlist+' --subjob " etc/scripts/condor.jds -queue 1|tail -n 1|awk \'{print $NF}\'|sed "s/[^0-9]//g"',shell=True).strip())
-            condor_wait(waiting_list)
-        '''
     else:
         for flag,sample in tnpConf.flags.items() if args.flag is None else [(args.flag,tnpConf.flags[args.flag])]:
             tnpBins = pickle.load( open( '%s/%s/bining.pkl'%(tnpConf.baseOutDir,flag),'rb') )
@@ -283,6 +269,8 @@ if args.sumUp:
         print 'Eff, configs are saved in file : ',  effFileName
         fOut.close()
 
+    Var0=tnpConf.biningDef[0]['var']
+    Var1=tnpConf.biningDef[1]['var']
     fOut=rt.TFile('%s/result.root'%(tnpConf.baseOutDir),'recreate')
     effihists=[]
     for centralflag,syss in tnpConf.systematicDef.items():
@@ -291,15 +279,15 @@ if args.sumUp:
         effihist=tnpRoot.GetEffiHist(effFileName,tnpBins)
         effihist.Write()
         for ib in range(effihist.GetXaxis().GetNbins()):
-            effihist.ProjectionY('%s_eta%.2fto%.2f'%(centralflag,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
+            effihist.ProjectionY('%s_%s%.2fto%.2f'%(centralflag,Var0,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         for ib in range(effihist.GetYaxis().GetNbins()):
-            effihist.ProjectionX('%s_pt%dto%d'%(centralflag,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
+            effihist.ProjectionX('%s_%s%dto%d'%(centralflag,Var1,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         effihists.append(effihist)
     
     if len(effihists)==2:
         sfhist=effihists[0].Clone()
         sfhist.Divide(effihists[1])
-        sfhist.SetNameTitle('SF_eta_pt','SF_eta_pt')
+        sfhist.SetNameTitle('SF_%s_%s'%(Var0,Var1),'SF_%s_%s'%(Var0,Var1))
         sfhist.Write()
     fOut.Close()
     print '%s/result.root'%(tnpConf.baseOutDir) + ' is saved'
@@ -313,15 +301,15 @@ if args.sumUp:
         effihist=tnpRoot.GetEffiHist(effFileName,tnpBins,"stat") ## Only Staterr
         effihist.Write()
         for ib in range(effihist.GetXaxis().GetNbins()):
-            effihist.ProjectionY('%s_eta%.2fto%.2f'%(centralflag,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
+            effihist.ProjectionY('%s_%s%.2fto%.2f'%(centralflag,Var0,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         for ib in range(effihist.GetYaxis().GetNbins()):
-            effihist.ProjectionX('%s_pt%dto%d'%(centralflag,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
+            effihist.ProjectionX('%s_%s%dto%d'%(centralflag,Var1,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         effihists_stat.append(effihist)
 
     if len(effihists_stat)==2:
         sfhist=effihists_stat[0].Clone()
         sfhist.Divide(effihists_stat[1])
-        sfhist.SetNameTitle('SF_eta_pt','SF_eta_pt')
+        sfhist.SetNameTitle('SF_%s_%s'%(Var0,Var1),'SF_%s_%s'%(Var0,Var1))
         sfhist.Write()
     fOut_stat.Close()
     print '%s/result_stat.root'%(tnpConf.baseOutDir) + ' is saved'
@@ -334,15 +322,15 @@ if args.sumUp:
         effihist=tnpRoot.GetEffiHist(effFileName,tnpBins,"syst") ## Only Systerr
         effihist.Write()
         for ib in range(effihist.GetXaxis().GetNbins()):
-            effihist.ProjectionY('%s_eta%.2fto%.2f'%(centralflag,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
+            effihist.ProjectionY('%s_%s%.2fto%.2f'%(centralflag,Var0,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         for ib in range(effihist.GetYaxis().GetNbins()):
-            effihist.ProjectionX('%s_pt%dto%d'%(centralflag,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
+            effihist.ProjectionX('%s_%s%dto%d'%(centralflag,Var1,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         effihists_syst.append(effihist)
 
     if len(effihists_syst)==2:
         sfhist=effihists_syst[0].Clone()
         sfhist.Divide(effihists_syst[1])
-        sfhist.SetNameTitle('SF_eta_pt','SF_eta_pt')
+        sfhist.SetNameTitle('SF_%s_%s'%(Var0,Var1),'SF_%s_%s'%(Var0,Var1))
         sfhist.Write()
     fOut_syst.Close()
     print '%s/result_syst.root'%(tnpConf.baseOutDir) + ' is saved'
@@ -368,9 +356,9 @@ if args.sumUp:
         effihist=tnpRoot.GetEffiHist(effReport,tnpBins,"stat") ## Only Staterr
         effihist.Write()
         for ib in range(effihist.GetXaxis().GetNbins()):
-            effihist.ProjectionY('%s_eta%.2fto%.2f'%(flag,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
+            effihist.ProjectionY('%s_%s%.2fto%.2f'%(flag,Var0,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         for ib in range(effihist.GetYaxis().GetNbins()):
-            effihist.ProjectionX('%s_pt%dto%d'%(flag,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
+            effihist.ProjectionX('%s_%s%dto%d'%(flag,Var1,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         fOut_stat.Close()
         print '%s/%s/result_stat.root'%(tnpConf.baseOutDir,flag) + ' is saved'
 

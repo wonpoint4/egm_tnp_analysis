@@ -42,16 +42,18 @@ def MoveTObject(filename1,filename2,objname):
     rootfile.Close()
 
 def GetEffiHist(filename,bindef,option="total"):
-    ptlist=[]
-    etalist=[]
+    Var0=bindef['vars'][0] ## Usually, 'eta' or 'abseta' or 'tag_nVertices'
+    Var1=bindef['vars'][1] ## Usually, 'pT'
+    Var0list=[]
+    Var1list=[]
     for ib in range(len(bindef['bins'])):
-        ptlist.append(bindef['bins'][ib]['vars']['pt']['max'])
-        ptlist.append(bindef['bins'][ib]['vars']['pt']['min'])
-        etalist.append(bindef['bins'][ib]['vars']['eta']['max'])
-        etalist.append(bindef['bins'][ib]['vars']['eta']['min'])
-    ptlist=sorted(list(set(ptlist)))
-    etalist=sorted(list(set(etalist)))
-    effihist=rt.TH2D('%s_eta_pt'%(filename.replace('.','/').split('/')[-2]),'%s_eta_pt'%(filename.replace('.','/').split('/')[-2]),len(etalist)-1,ar.array('d',etalist),len(ptlist)-1,ar.array('d',ptlist))
+        Var0list.append(bindef['bins'][ib]['vars'][Var0]['max'])
+        Var0list.append(bindef['bins'][ib]['vars'][Var0]['min'])
+        Var1list.append(bindef['bins'][ib]['vars'][Var1]['max'])
+        Var1list.append(bindef['bins'][ib]['vars'][Var1]['min'])
+    Var0list=sorted(list(set(Var0list)))
+    Var1list=sorted(list(set(Var1list)))
+    effihist=rt.TH2D('%s_%s_%s'%(filename.replace('.','/').split('/')[-2],Var0,Var1),'%s_%s_%s'%(filename.replace('.','/').split('/')[-2],Var0,Var1),len(Var0list)-1,ar.array('d',Var0list),len(Var1list)-1,ar.array('d',Var1list))
     f=open(filename,'r')
     for line in f.readlines():
         if len(line) is 1 : continue
@@ -59,17 +61,16 @@ def GetEffiHist(filename,bindef,option="total"):
         if not words[0].isdigit(): continue
         ib=int(words[0])
         
-        effihist.SetBinContent(effihist.FindBin(bindef['bins'][ib]['vars']['eta']['min'],bindef['bins'][ib]['vars']['pt']['min']),float(words[1]))
+        effihist.SetBinContent(effihist.FindBin(bindef['bins'][ib]['vars'][Var0]['min'],bindef['bins'][ib]['vars'][Var1]['min']),float(words[1]))
         if option is "stat":
-            effihist.SetBinError(effihist.FindBin(bindef['bins'][ib]['vars']['eta']['min'],bindef['bins'][ib]['vars']['pt']['min']),math.sqrt(float(words[2])*float(words[2])))
+            effihist.SetBinError(effihist.FindBin(bindef['bins'][ib]['vars'][Var0]['min'],bindef['bins'][ib]['vars'][Var1]['min']),math.sqrt(float(words[2])*float(words[2])))
         elif option is "syst":
-            effihist.SetBinError(effihist.FindBin(bindef['bins'][ib]['vars']['eta']['min'],bindef['bins'][ib]['vars']['pt']['min']),math.sqrt(float(words[3])*float(words[3])))
+            effihist.SetBinError(effihist.FindBin(bindef['bins'][ib]['vars'][Var0]['min'],bindef['bins'][ib]['vars'][Var1]['min']),math.sqrt(float(words[3])*float(words[3])))
         else:
-            effihist.SetBinError(effihist.FindBin(bindef['bins'][ib]['vars']['eta']['min'],bindef['bins'][ib]['vars']['pt']['min']),math.sqrt(float(words[2])*float(words[2])+float(words[3])*float(words[3])))
+            effihist.SetBinError(effihist.FindBin(bindef['bins'][ib]['vars'][Var0]['min'],bindef['bins'][ib]['vars'][Var1]['min']),math.sqrt(float(words[2])*float(words[2])+float(words[3])*float(words[3])))
 
     effihist.SetOption('colz text')
     return effihist
-
 
 def histPlotter( filename, tnpBin, plotDir ):
     print 'opening ', filename
