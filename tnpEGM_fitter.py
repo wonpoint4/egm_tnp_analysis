@@ -354,6 +354,7 @@ if args.sumUp:
         effReport ='%s/%s/report.txt' % (tnpConf.baseOutDir,flag)
         tnpBins = pickle.load( open( '%s/%s/bining.pkl'%(tnpConf.baseOutDir,flag),'rb') )
         effihist=tnpRoot.GetEffiHist(effReport,tnpBins,"stat") ## Only Staterr
+        effihist.SetDirectory(0)
         effihist.Write()
         for ib in range(effihist.GetXaxis().GetNbins()):
             effihist.ProjectionY('%s_%s%.2fto%.2f'%(flag,Var0,effihist.GetXaxis().GetBinLowEdge(ib+1),effihist.GetXaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
@@ -361,6 +362,14 @@ if args.sumUp:
             effihist.ProjectionX('%s_%s%dto%d'%(flag,Var1,effihist.GetYaxis().GetBinLowEdge(ib+1),effihist.GetYaxis().GetBinLowEdge(ib+2)),ib+1,ib+1).Write()
         fOut_stat.Close()
         print '%s/%s/result_stat.root'%(tnpConf.baseOutDir,flag) + ' is saved'
+
+        ## To make conversion into Rochester form easier
+        ## Nominal result_stat.root includes all systs' eff TH2D
+        fOut_Nominal_stat=rt.TFile('%s/result_stat.root'%(tnpConf.baseOutDir),'update')
+        effihist.SetNameTitle("Systematics_%s"%(flag), "Systematics_%s_eta_pt"%(flag))
+        effihist.Write()
+        del effihist
+        fOut_Nominal_stat.Close()
 
 #    import libPython.EGammaID_scaleFactors as egm_sf
 #    egm_sf.doEGM_SFs(effFileName,sampleToFit.lumi)

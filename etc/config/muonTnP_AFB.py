@@ -89,7 +89,7 @@ elif Period == "UL2016a" :
   else :
     eventexp = eventexp.replace('Medium','Medium2016')
   #From KyeongPil's presentation
-  eventexp = eventexp.replace('pair_deltaR > 0.3','pair_deltaR > 0.3 && !(tag_eta*eta > 0 && abs(tag_eta) > 0.9 && abs(eta) > 0.9 && abs(tag_phi-phi) < 70/180*3.141592)')
+  #eventexp = eventexp.replace('pair_deltaR > 0.3','pair_deltaR > 0.3 && !(tag_eta*eta > 0 && abs(tag_eta) > 0.9 && abs(eta) > 0.9 && abs(tag_phi-phi) < 70/180*3.141592)')
 elif Period == "UL2016b" :
   filename = 'TnPTreeZ_21Feb2020_UL2016_SingleMuon_Run2016FGHv1.root'
   filenameMC = 'TnPTreeZ_106XSummer19_UL16RECO_DYJetsToLL_M50_MadgraphMLM_WithWeights.root'
@@ -136,7 +136,7 @@ tnpParNomFit = [
     "meanGaussP[0.0, -5.0,5.0]","sigmaGaussP[0.8, 0.5,3.5]",  ## [0.5, 0.4,5.0]
     "meanGaussF[0.0, -5.0,5.0]","sigmaGaussF[0.7, 0.5,3.5]", ## [0.5, 0.4,5.0]
     "aExpoP[-0.1, -1,0.1]",
-    "aExpoF[-0.1, -1,0.1]", # Initial (-0.1)->(-0.3) is good when Refit
+    "aExpoF[0.1, -1,0.1]", # Initial (-0.1)->(-0.3) is good when Refit
     "Gaussian::sigResPass(mass,meanGaussP,sigmaGaussP)",
     "Gaussian::sigResFail(mass,meanGaussF,sigmaGaussF)",
     "Exponential::backgroundPass(mass, aExpoP)",
@@ -148,7 +148,7 @@ tnpParNomFit2 = [
     "meanCBF[0.0, -5.0,5.0]","sigmaCBF[2, 0.5,3.5]","aCBF[2.0, 1.2,3.5]",'nCBF[3, 0.1,5]',
 #    "meanCBF[-0.0, -5.0,5.0]","sigmaCBF[2, 0.5,3.5]","aCBF[2.0, 1.2,3.5]",'nCBF[3, 0.1,5]',
     "aExpoP[-0.1, -1,0.1]",
-    "aExpoF[-0.1, -1,0.01]", # Initial (-0.1)->(-0.3) is good when Refit
+    "aExpoF[-0.1, -1,0.1]", # Initial (-0.1)->(-0.3) is good when Refit
     "RooCBShape::sigResPass(mass,meanCBP,sigmaCBP,aCBP,nCBP)",
     "RooCBShape::sigResFail(mass,meanCBF,sigmaCBF,aCBF,nCBF)",
     "Exponential::backgroundPass(mass, aExpoP)",

@@ -8,7 +8,6 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
   bool DoSystematicStudy = true;
 
   if(eff == "IsoMu24" && DataPeriod == "2017") eff = "IsoMu27";
-  if(eff == "IsoMu24" && DataPeriod == "UL2017") eff = "IsoMu2427";
   vector<double> eta = { -2.4, -2.3, -2.2, -2.1, -2.0, -1.9, -1.8, -1.7, -1.6, -1.5, -1.4, -1.3, -1.2, -1.1, -1.0, -0.9, -0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4 };
   vector<double> pt = {10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 120 };
   if(eff == "Mu17") pt = { 14, 16, 18, 20, 25, 30, 35, 40, 45, 50, 60, 120 };
@@ -558,6 +557,7 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
     gSystem->mkdir(plotDir,kTRUE);
 
     // Syst plots vs. pT
+    /*
     for(unsigned int i_eta = 0; i_eta<eta.size()-1; i_eta++){
       TString binname = "eta"+TString::Format("%.2f",eta.at(i_eta))+"to"+TString::Format("%.2f",eta.at(i_eta+1));
 
@@ -869,7 +869,7 @@ void plotter(TString DataPeriod = "UL2017", TString eff = "IsoMu24", TString Cha
       c_Data->Close();
       c_MC->Close();
     }
-
+    */
     // Syst plots vs. eta
     vector<double> someerror_Data = {};
     vector<double> someerror_MC = {};
